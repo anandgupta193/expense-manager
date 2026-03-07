@@ -1,5 +1,5 @@
-import AddExpense from "@/components/AddExpense";
+import AddExpense from '@/components/AddExpense'
 
 export default function Page() {
-  return <AddExpense />;
+  return <AddExpense />
 }

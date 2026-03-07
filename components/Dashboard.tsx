@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from 'react'
 import {
   Button,
   DatePicker,
@@ -15,7 +15,7 @@ import {
   Typography,
   Empty,
   theme,
-} from "antd";
+} from 'antd'
 import {
   DeleteOutlined,
   EditOutlined,
@@ -23,44 +23,38 @@ import {
   FallOutlined,
   WalletOutlined,
   CalendarOutlined,
-} from "@ant-design/icons";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import dayjs, { Dayjs } from "dayjs";
-import { storage } from "@/lib/storage";
-import type { Category, Expense } from "@/lib/types";
+} from '@ant-design/icons'
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import dayjs, { Dayjs } from 'dayjs'
+import { storage } from '@/lib/storage'
+import type { Category, Expense, Spender } from '@/lib/types'
 
-const { Title, Text } = Typography;
+const { Title, Text } = Typography
 
 interface ChartData {
-  name: string;
-  value: number;
-  color: string;
+  name: string
+  value: number
+  color: string
 }
 
 interface EditFormValues {
-  description: string;
-  amount: number;
-  categoryId: string;
-  date: Dayjs;
-  notes?: string;
+  description: string
+  amount: number
+  categoryId: string
+  date: Dayjs
+  notes?: string
+  spenderId?: string
 }
 
 function formatINR(amount: number) {
-  return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function currentMonthTotal(expenses: Expense[]): number {
-  const now = dayjs();
+  const now = dayjs()
   return expenses
     .filter((e) => dayjs(e.date).month() === now.month() && dayjs(e.date).year() === now.year())
-    .reduce((s, e) => s + e.amount, 0);
+    .reduce((s, e) => s + e.amount, 0)
 }
 
 function StatCard({
@@ -69,20 +63,23 @@ function StatCard({
   icon,
   color,
 }: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  color: string;
+  label: string
+  value: string
+  icon: React.ReactNode
+  color: string
 }) {
-  const { token } = theme.useToken();
+  const { token } = theme.useToken()
   return (
     <div
       className="rounded-xl p-4 flex items-center gap-4"
-      style={{ background: token.colorBgContainer, border: `1px solid ${token.colorBorderSecondary}` }}
+      style={{
+        background: token.colorBgContainer,
+        border: `1px solid ${token.colorBorderSecondary}`,
+      }}
     >
       <div
         className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-        style={{ background: color + "20", color }}
+        style={{ background: color + '20', color }}
       >
         {icon}
       </div>
@@ -95,65 +92,66 @@ function StatCard({
         </Text>
       </div>
     </div>
-  );
+  )
 }
 
 export default function Dashboard() {
-  const { token } = theme.useToken();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [editTarget, setEditTarget] = useState<Expense | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form] = Form.useForm<EditFormValues>();
+  const { token } = theme.useToken()
+  const [expenses, setExpenses] = useState<Expense[]>(() => storage.getExpenses())
+  const [categories] = useState<Category[]>(() => storage.getCategories())
+  const [spenders] = useState<Spender[]>(() => storage.getSpenders())
+  const [selectedSpenderIds, setSelectedSpenderIds] = useState<string[]>([])
+  const [editTarget, setEditTarget] = useState<Expense | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [form] = Form.useForm<EditFormValues>()
 
-  const load = useCallback(() => {
-    setExpenses(storage.getExpenses());
-    setCategories(storage.getCategories());
-  }, []);
+  const catMap = Object.fromEntries(categories.map((c) => [c.id, c]))
+  const spenderMap = Object.fromEntries(spenders.map((s) => [s.id, s]))
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const filteredExpenses =
+    selectedSpenderIds.length === 0
+      ? expenses
+      : expenses.filter((e) => e.spenderId && selectedSpenderIds.includes(e.spenderId))
 
-  const catMap = Object.fromEntries(categories.map((c) => [c.id, c]));
-  const total = expenses.reduce((s, e) => s + e.amount, 0);
-  const monthTotal = currentMonthTotal(expenses);
+  const total = filteredExpenses.reduce((s, e) => s + e.amount, 0)
+  const monthTotal = currentMonthTotal(filteredExpenses)
   const topCat =
     categories
       .map((c) => ({
         name: c.name,
-        total: expenses.filter((e) => e.categoryId === c.id).reduce((s, e) => s + e.amount, 0),
+        total: filteredExpenses.filter((e) => e.categoryId === c.id).reduce((s, e) => s + e.amount, 0),
       }))
-      .sort((a, b) => b.total - a.total)[0] ?? null;
+      .sort((a, b) => b.total - a.total)[0] ?? null
 
   const chartData: ChartData[] = categories
     .map((c) => ({
       name: c.name,
-      value: expenses.filter((e) => e.categoryId === c.id).reduce((s, e) => s + e.amount, 0),
+      value: filteredExpenses.filter((e) => e.categoryId === c.id).reduce((s, e) => s + e.amount, 0),
       color: c.color,
     }))
-    .filter((d) => d.value > 0);
+    .filter((d) => d.value > 0)
 
   function openEdit(expense: Expense) {
-    setEditTarget(expense);
+    setEditTarget(expense)
     form.setFieldsValue({
       description: expense.description,
       amount: expense.amount,
       categoryId: expense.categoryId,
       date: dayjs(expense.date),
       notes: expense.notes,
-    });
-    setModalOpen(true);
+      spenderId: expense.spenderId,
+    })
+    setModalOpen(true)
   }
 
   function handleDelete(id: string) {
-    const updated = expenses.filter((e) => e.id !== id);
-    storage.setExpenses(updated);
-    setExpenses(updated);
+    const updated = expenses.filter((e) => e.id !== id)
+    storage.setExpenses(updated)
+    setExpenses(updated)
   }
 
   function handleEditSave(values: EditFormValues) {
-    if (!editTarget) return;
+    if (!editTarget) return
     const updated = expenses.map((e) =>
       e.id === editTarget.id
         ? {
@@ -161,58 +159,77 @@ export default function Dashboard() {
             description: values.description.trim(),
             amount: values.amount,
             categoryId: values.categoryId,
-            date: values.date.format("YYYY-MM-DD"),
+            date: values.date.format('YYYY-MM-DD'),
             notes: values.notes?.trim() || undefined,
+            spenderId: values.spenderId || undefined,
           }
         : e
-    );
-    storage.setExpenses(updated);
-    setExpenses(updated);
-    setModalOpen(false);
-    setEditTarget(null);
+    )
+    storage.setExpenses(updated)
+    setExpenses(updated)
+    setModalOpen(false)
+    setEditTarget(null)
   }
 
   const columns = [
     {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
       width: 112,
       sorter: (a: Expense, b: Expense) => a.date.localeCompare(b.date),
-      defaultSortOrder: "descend" as const,
+      defaultSortOrder: 'descend' as const,
     },
     {
-      title: "Description",
-      dataIndex: "description",
-      key: "description",
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
       ellipsis: true,
     },
     {
-      title: "Category",
-      dataIndex: "categoryId",
-      key: "categoryId",
+      title: 'Category',
+      dataIndex: 'categoryId',
+      key: 'categoryId',
       width: 148,
       render: (id: string) => {
-        const cat = catMap[id];
+        const cat = catMap[id]
         return cat ? (
           <Tag color="default" style={{ borderColor: cat.color, color: cat.color }}>
-            <span
-              className="inline-block w-2 h-2 rounded-full mr-1"
-              style={{ background: cat.color }}
-            />
+            <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ background: cat.color }} />
             {cat.name}
           </Tag>
         ) : (
           <Tag>Unknown</Tag>
-        );
+        )
       },
     },
     {
-      title: "Amount",
-      dataIndex: "amount",
-      key: "amount",
+      title: 'Spent By',
+      dataIndex: 'spenderId',
+      key: 'spenderId',
       width: 120,
-      align: "right" as const,
+      render: (spenderId: string | undefined) => {
+        const spender = spenderId ? spenderMap[spenderId] : null
+        if (!spender) return <Text type="secondary">—</Text>
+        return (
+          <span className="flex items-center gap-2">
+            <span
+              className="inline-block w-6 h-6 rounded-full flex-shrink-0 text-white text-xs font-bold flex items-center justify-center"
+              style={{ background: spender.avatarColor, lineHeight: '24px', textAlign: 'center' }}
+            >
+              {spender.name.charAt(0).toUpperCase()}
+            </span>
+            {spender.name}
+          </span>
+        )
+      },
+    },
+    {
+      title: 'Amount',
+      dataIndex: 'amount',
+      key: 'amount',
+      width: 120,
+      align: 'right' as const,
       sorter: (a: Expense, b: Expense) => a.amount - b.amount,
       render: (amount: number) => (
         <Text strong style={{ color: token.colorError }}>
@@ -221,24 +238,19 @@ export default function Dashboard() {
       ),
     },
     {
-      title: "Notes",
-      dataIndex: "notes",
-      key: "notes",
+      title: 'Notes',
+      dataIndex: 'notes',
+      key: 'notes',
       ellipsis: true,
-      responsive: ["lg"] as ("lg")[],
+      responsive: ['lg'] as 'lg'[],
     },
     {
-      title: "",
-      key: "actions",
+      title: '',
+      key: 'actions',
       width: 80,
       render: (_: unknown, record: Expense) => (
         <div className="flex gap-1">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            size="small"
-            onClick={() => openEdit(record)}
-          />
+          <Button type="text" icon={<EditOutlined />} size="small" onClick={() => openEdit(record)} />
           <Popconfirm
             title="Delete this expense?"
             onConfirm={() => handleDelete(record.id)}
@@ -250,20 +262,27 @@ export default function Dashboard() {
         </div>
       ),
     },
-  ];
+  ]
 
   const categoryOptions = categories.map((c) => ({
     value: c.id,
     label: (
       <span className="flex items-center gap-2">
-        <span
-          className="inline-block w-3 h-3 rounded-full flex-shrink-0"
-          style={{ background: c.color }}
-        />
+        <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ background: c.color }} />
         {c.name}
       </span>
     ),
-  }));
+  }))
+
+  const spenderOptions = spenders.map((s) => ({
+    value: s.id,
+    label: (
+      <span className="flex items-center gap-2">
+        <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ background: s.avatarColor }} />
+        {s.name}
+      </span>
+    ),
+  }))
 
   return (
     <div className="space-y-6">
@@ -277,12 +296,7 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard
-          label="Total Spent"
-          value={formatINR(total)}
-          icon={<WalletOutlined />}
-          color={token.colorPrimary}
-        />
+        <StatCard label="Total Spent" value={formatINR(total)} icon={<WalletOutlined />} color={token.colorPrimary} />
         <StatCard
           label="This Month"
           value={formatINR(monthTotal)}
@@ -291,13 +305,13 @@ export default function Dashboard() {
         />
         <StatCard
           label="Total Expenses"
-          value={`${expenses.length}`}
+          value={`${filteredExpenses.length}`}
           icon={<RiseOutlined />}
           color={token.colorSuccess}
         />
         <StatCard
           label="Top Category"
-          value={topCat ? topCat.name : "—"}
+          value={topCat ? topCat.name : '—'}
           icon={<FallOutlined />}
           color={token.colorError}
         />
@@ -335,7 +349,7 @@ export default function Dashboard() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value) => [formatINR(Number(value)), "Amount"]}
+                  formatter={(value) => [formatINR(Number(value)), 'Amount']}
                   contentStyle={{
                     background: token.colorBgContainer,
                     border: `1px solid ${token.colorBorderSecondary}`,
@@ -343,11 +357,7 @@ export default function Dashboard() {
                     color: token.colorText,
                   }}
                 />
-                <Legend
-                  formatter={(value) => (
-                    <span style={{ color: token.colorText, fontSize: 13 }}>{value}</span>
-                  )}
-                />
+                <Legend formatter={(value) => <span style={{ color: token.colorText, fontSize: 13 }}>{value}</span>} />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -371,15 +381,12 @@ export default function Dashboard() {
               {chartData
                 .sort((a, b) => b.value - a.value)
                 .map((item) => {
-                  const pct = total > 0 ? (item.value / total) * 100 : 0;
+                  const pct = total > 0 ? (item.value / total) * 100 : 0
                   return (
                     <div key={item.name}>
                       <div className="flex justify-between items-center mb-1">
                         <div className="flex items-center gap-2">
-                          <span
-                            className="w-3 h-3 rounded-full flex-shrink-0"
-                            style={{ background: item.color }}
-                          />
+                          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: item.color }} />
                           <Text className="text-sm">{item.name}</Text>
                         </div>
                         <Text strong className="text-sm">
@@ -396,12 +403,30 @@ export default function Dashboard() {
                         />
                       </div>
                     </div>
-                  );
+                  )
                 })}
             </div>
           )}
         </div>
       </div>
+
+      {/* Spender filter */}
+      {spenders.length > 0 && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <Text type="secondary" className="text-sm">
+            Filter by spender:
+          </Text>
+          <Select
+            mode="multiple"
+            allowClear
+            placeholder="All spenders"
+            options={spenderOptions}
+            value={selectedSpenderIds}
+            onChange={setSelectedSpenderIds}
+            style={{ minWidth: 220 }}
+          />
+        </div>
+      )}
 
       {/* Expenses table */}
       <div
@@ -412,14 +437,14 @@ export default function Dashboard() {
         }}
       >
         <Title level={5} className="!mb-4">
-          All Expenses ({expenses.length})
+          All Expenses ({filteredExpenses.length})
         </Title>
         <Table
-          dataSource={expenses}
+          dataSource={filteredExpenses}
           columns={columns}
           rowKey="id"
           pagination={{ pageSize: 10, hideOnSinglePage: true, showSizeChanger: false }}
-          scroll={{ x: "max-content" }}
+          scroll={{ x: 'max-content' }}
           locale={{ emptyText: <Empty description="No expenses yet" /> }}
           size="small"
         />
@@ -430,50 +455,42 @@ export default function Dashboard() {
         title="Edit Expense"
         open={modalOpen}
         onCancel={() => {
-          setModalOpen(false);
-          setEditTarget(null);
+          setModalOpen(false)
+          setEditTarget(null)
         }}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleEditSave}
-          className="pt-4"
-        >
+        <Form form={form} layout="vertical" onFinish={handleEditSave} className="pt-4">
           <Form.Item
             label="Description"
             name="description"
-            rules={[{ required: true, message: "Enter a description" }]}
+            rules={[{ required: true, message: 'Enter a description' }]}
           >
             <Input maxLength={120} />
           </Form.Item>
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              label="Amount (₹)"
-              name="amount"
-              rules={[{ required: true, message: "Enter amount" }]}
-            >
+            <Form.Item label="Amount (₹)" name="amount" rules={[{ required: true, message: 'Enter amount' }]}>
               <InputNumber className="w-full" min={0.01} precision={2} />
             </Form.Item>
 
-            <Form.Item
-              label="Date"
-              name="date"
-              rules={[{ required: true, message: "Pick a date" }]}
-            >
+            <Form.Item label="Date" name="date" rules={[{ required: true, message: 'Pick a date' }]}>
               <DatePicker className="w-full" />
             </Form.Item>
           </div>
 
-          <Form.Item
-            label="Category"
-            name="categoryId"
-            rules={[{ required: true, message: "Select a category" }]}
-          >
+          <Form.Item label="Category" name="categoryId" rules={[{ required: true, message: 'Select a category' }]}>
             <Select options={categoryOptions} />
+          </Form.Item>
+
+          <Form.Item label="Spent By" name="spenderId">
+            <Select
+              options={spenderOptions}
+              allowClear
+              placeholder={spenders.length === 0 ? 'Add spenders first' : 'Select a spender'}
+              disabled={spenders.length === 0}
+            />
           </Form.Item>
 
           <Form.Item label="Notes" name="notes">
@@ -489,5 +506,5 @@ export default function Dashboard() {
         </Form>
       </Modal>
     </div>
-  );
+  )
 }

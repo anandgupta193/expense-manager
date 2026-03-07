@@ -1,4 +1,4 @@
-import ReminderSettings from "@/components/ReminderSettings";
+import ReminderSettings from '@/components/ReminderSettings'
 
 export default function SettingsPage() {
   return (
@@ -6,5 +6,5 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-bold mb-6">Settings</h1>
       <ReminderSettings />
     </div>
-  );
+  )
 }

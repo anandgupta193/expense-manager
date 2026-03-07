@@ -5,13 +5,13 @@ import { App, Button, ColorPicker, Form, Input, Popconfirm, Typography, Modal, t
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Color } from 'antd/es/color-picker'
 import { storage } from '@/lib/storage'
-import type { Category } from '@/lib/types'
+import type { Spender } from '@/lib/types'
 
 const { Title, Text } = Typography
 
-interface CategoryFormValues {
+interface SpenderFormValues {
   name: string
-  color: Color | string
+  avatarColor: Color | string
 }
 
 function resolveColor(color: Color | string): string {
@@ -19,56 +19,67 @@ function resolveColor(color: Color | string): string {
   return color.toHexString()
 }
 
-export default function CategoryManager() {
+function SpenderAvatar({ name, color }: { name: string; color: string }) {
+  return (
+    <div
+      className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-white text-base"
+      style={{ background: color }}
+    >
+      {name.charAt(0).toUpperCase()}
+    </div>
+  )
+}
+
+export default function SpenderManager() {
   const { token } = theme.useToken()
   const { message } = App.useApp()
-  const [categories, setCategories] = useState<Category[]>(() => storage.getCategories())
-  const [editTarget, setEditTarget] = useState<Category | null>(null)
+  const [spenders, setSpenders] = useState<Spender[]>(() => storage.getSpenders())
+  const [editTarget, setEditTarget] = useState<Spender | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [addForm] = Form.useForm<CategoryFormValues>()
-  const [editForm] = Form.useForm<CategoryFormValues>()
+  const [addForm] = Form.useForm<SpenderFormValues>()
+  const [editForm] = Form.useForm<SpenderFormValues>()
 
-  function persist(updated: Category[]) {
-    storage.setCategories(updated)
-    setCategories(updated)
+  function persist(updated: Spender[]) {
+    storage.setSpenders(updated)
+    setSpenders(updated)
   }
 
-  function handleAdd(values: CategoryFormValues) {
-    const color = resolveColor(values.color)
-    const newCat: Category = {
+  function handleAdd(values: SpenderFormValues) {
+    const avatarColor = resolveColor(values.avatarColor)
+    const newSpender: Spender = {
       id: crypto.randomUUID(),
       name: values.name.trim(),
-      color,
+      avatarColor,
     }
-    persist([...categories, newCat])
+    persist([...spenders, newSpender])
     addForm.resetFields()
-    message.success('Category added!')
+    message.success('Spender added!')
   }
 
-  function openEdit(cat: Category) {
-    setEditTarget(cat)
-    editForm.setFieldsValue({ name: cat.name, color: cat.color })
+  function openEdit(spender: Spender) {
+    setEditTarget(spender)
+    editForm.setFieldsValue({ name: spender.name, avatarColor: spender.avatarColor })
     setModalOpen(true)
   }
 
-  function handleEditSave(values: CategoryFormValues) {
+  function handleEditSave(values: SpenderFormValues) {
     if (!editTarget) return
-    const color = resolveColor(values.color)
-    persist(categories.map((c) => (c.id === editTarget.id ? { ...c, name: values.name.trim(), color } : c)))
+    const avatarColor = resolveColor(values.avatarColor)
+    persist(spenders.map((s) => (s.id === editTarget.id ? { ...s, name: values.name.trim(), avatarColor } : s)))
     setModalOpen(false)
     setEditTarget(null)
-    message.success('Category updated!')
+    message.success('Spender updated!')
   }
 
   function handleDelete(id: string) {
     const expenses = storage.getExpenses()
-    const inUse = expenses.some((e) => e.categoryId === id)
+    const inUse = expenses.some((e) => e.spenderId === id)
     if (inUse) {
-      message.warning('Cannot delete — this category has expenses. Reassign them first.')
+      message.warning('Cannot delete — this spender has expenses. Reassign them first.')
       return
     }
-    persist(categories.filter((c) => c.id !== id))
-    message.success('Category deleted.')
+    persist(spenders.filter((s) => s.id !== id))
+    message.success('Spender deleted.')
   }
 
   return (
@@ -76,12 +87,12 @@ export default function CategoryManager() {
       {/* Header */}
       <div>
         <Title level={3} className="!mb-0">
-          Categories
+          Spenders
         </Title>
-        <Text type="secondary">Create and manage your expense categories</Text>
+        <Text type="secondary">Manage people who spend money</Text>
       </div>
 
-      {/* Add new category */}
+      {/* Add new spender */}
       <div
         className="rounded-xl p-6"
         style={{
@@ -90,9 +101,9 @@ export default function CategoryManager() {
         }}
       >
         <Title level={5} className="!mb-4">
-          Add New Category
+          Add New Spender
         </Title>
-        <Form form={addForm} layout="vertical" onFinish={handleAdd} initialValues={{ color: '#6366f1' }}>
+        <Form form={addForm} layout="vertical" onFinish={handleAdd} initialValues={{ avatarColor: '#6366f1' }}>
           <div className="flex gap-4 items-end">
             <Form.Item
               label="Name"
@@ -102,18 +113,18 @@ export default function CategoryManager() {
                 { required: true, message: 'Enter a name' },
                 {
                   validator: (_, value) => {
-                    if (value && categories.some((c) => c.name.toLowerCase() === value.trim().toLowerCase())) {
-                      return Promise.reject('A category with this name already exists')
+                    if (value && spenders.some((s) => s.name.toLowerCase() === value.trim().toLowerCase())) {
+                      return Promise.reject('A spender with this name already exists')
                     }
                     return Promise.resolve()
                   },
                 },
               ]}
             >
-              <Input placeholder="e.g. Rent & Housing" maxLength={40} size="large" />
+              <Input placeholder="e.g. Alice" maxLength={40} size="large" />
             </Form.Item>
 
-            <Form.Item label="Color" name="color" className="!mb-0">
+            <Form.Item label="Color" name="avatarColor" className="!mb-0">
               <ColorPicker size="large" />
             </Form.Item>
 
@@ -126,7 +137,7 @@ export default function CategoryManager() {
         </Form>
       </div>
 
-      {/* Category list */}
+      {/* Spender list */}
       <div
         className="rounded-xl p-6"
         style={{
@@ -135,52 +146,50 @@ export default function CategoryManager() {
         }}
       >
         <Title level={5} className="!mb-4">
-          All Categories ({categories.length})
+          All Spenders ({spenders.length})
         </Title>
 
-        {categories.length === 0 ? (
-          <Empty description="No categories yet" />
+        {spenders.length === 0 ? (
+          <Empty description="No spenders yet" />
         ) : (
           <div className="space-y-2">
-            {categories.map((cat) => {
+            {spenders.map((spender) => {
               const expenses = storage.getExpenses()
-              const count = expenses.filter((e) => e.categoryId === cat.id).length
+              const count = expenses.filter((e) => e.spenderId === spender.id).length
               return (
                 <div
-                  key={cat.id}
+                  key={spender.id}
                   className="flex items-center gap-4 p-4 rounded-xl"
                   style={{
                     background: token.colorFillAlter,
                     border: `1px solid ${token.colorBorderSecondary}`,
                   }}
                 >
-                  {/* Color swatch */}
-                  <div className="w-10 h-10 rounded-lg flex-shrink-0" style={{ background: cat.color }} />
+                  <SpenderAvatar name={spender.name} color={spender.avatarColor} />
 
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <Text strong className="block truncate">
-                      {cat.name}
+                      {spender.name}
                     </Text>
                     <Text type="secondary" className="text-xs">
                       {count} expense{count !== 1 ? 's' : ''}
                     </Text>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex gap-1 flex-shrink-0">
-                    <Button type="text" icon={<EditOutlined />} onClick={() => openEdit(cat)} />
+                    <Button type="text" icon={<EditOutlined />} onClick={() => openEdit(spender)} />
                     <Popconfirm
-                      title={`Delete "${cat.name}"?`}
+                      title={`Delete "${spender.name}"?`}
                       description={
                         count > 0
-                          ? `This category has ${count} expense(s). Delete anyway?`
+                          ? `This spender has ${count} expense(s). Reassign them first.`
                           : 'This action cannot be undone.'
                       }
-                      onConfirm={() => handleDelete(cat.id)}
+                      onConfirm={() => handleDelete(spender.id)}
                       okText="Delete"
                       okButtonProps={{ danger: true }}
                       cancelText="Cancel"
+                      disabled={count > 0}
                     >
                       <Button type="text" danger icon={<DeleteOutlined />} />
                     </Popconfirm>
@@ -194,7 +203,7 @@ export default function CategoryManager() {
 
       {/* Edit modal */}
       <Modal
-        title="Edit Category"
+        title="Edit Spender"
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false)
@@ -213,7 +222,7 @@ export default function CategoryManager() {
             >
               <Input maxLength={40} size="large" />
             </Form.Item>
-            <Form.Item label="Color" name="color">
+            <Form.Item label="Color" name="avatarColor">
               <ColorPicker size="large" />
             </Form.Item>
           </div>

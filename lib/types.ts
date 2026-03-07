@@ -1,28 +1,28 @@
 export interface Category {
-  id: string;
-  name: string;
-  color: string;
+  id: string
+  name: string
+  color: string
 }
 
 export interface Spender {
-  id: string;
-  name: string;
-  avatarColor: string; // hex
+  id: string
+  name: string
+  avatarColor: string // hex
 }
 
 export interface Expense {
-  id: string;
-  description: string;
-  amount: number;
-  categoryId: string;
-  date: string; // YYYY-MM-DD
-  notes?: string;
-  spenderId?: string;
+  id: string
+  description: string
+  amount: number
+  categoryId: string
+  date: string // YYYY-MM-DD
+  notes?: string
+  spenderId?: string
 }
 
-export type Theme = "light" | "dark";
+export type Theme = 'light' | 'dark'
 
 export interface ReminderConfig {
-  enabled: boolean;
-  time: string; // "HH:MM"
+  enabled: boolean
+  time: string // "HH:MM"
 }

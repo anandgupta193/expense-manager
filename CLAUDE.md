@@ -28,6 +28,7 @@ All data lives in **localStorage only** (no backend). Three keys: `em-expenses`,
 ### Theme system
 
 `app/providers.tsx` is a `"use client"` component that:
+
 1. Wraps everything in antd `ConfigProvider` (switches `darkAlgorithm` / `defaultAlgorithm`)
 2. Exposes `useTheme()` context with `{ theme, toggleTheme }`
 3. Toggles `.dark` class on `<html>` for Tailwind dark variants
