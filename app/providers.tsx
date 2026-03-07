@@ -18,10 +18,13 @@ const ThemeContext = createContext<ThemeContextType>({
 export const useTheme = () => useContext(ThemeContext)
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'light'
-    return storage.getTheme()
-  })
+  const [theme, setTheme] = useState<Theme>('light')
+
+  useEffect(() => {
+    const saved = storage.getTheme()
+    setTheme(saved)
+    document.documentElement.classList.toggle('dark', saved === 'dark')
+  }, [])
 
   useEffect(() => {
     storage.setTheme(theme)

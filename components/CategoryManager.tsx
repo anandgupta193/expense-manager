@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { App, Button, ColorPicker, Form, Input, Popconfirm, Typography, Modal, theme, Empty } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Color } from 'antd/es/color-picker'
@@ -22,7 +22,11 @@ function resolveColor(color: Color | string): string {
 export default function CategoryManager() {
   const { token } = theme.useToken()
   const { message } = App.useApp()
-  const [categories, setCategories] = useState<Category[]>(() => storage.getCategories())
+  const [categories, setCategories] = useState<Category[]>([])
+
+  useEffect(() => {
+    setCategories(storage.getCategories())
+  }, [])
   const [editTarget, setEditTarget] = useState<Category | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [addForm] = Form.useForm<CategoryFormValues>()

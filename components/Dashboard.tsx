@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Button,
   DatePicker,
@@ -97,9 +97,15 @@ function StatCard({
 
 export default function Dashboard() {
   const { token } = theme.useToken()
-  const [expenses, setExpenses] = useState<Expense[]>(() => storage.getExpenses())
-  const [categories] = useState<Category[]>(() => storage.getCategories())
-  const [spenders] = useState<Spender[]>(() => storage.getSpenders())
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [spenders, setSpenders] = useState<Spender[]>([])
+
+  useEffect(() => {
+    setExpenses(storage.getExpenses())
+    setCategories(storage.getCategories())
+    setSpenders(storage.getSpenders())
+  }, [])
   const [selectedSpenderIds, setSelectedSpenderIds] = useState<string[]>([])
   const [editTarget, setEditTarget] = useState<Expense | null>(null)
   const [modalOpen, setModalOpen] = useState(false)

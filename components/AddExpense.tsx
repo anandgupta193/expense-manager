@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { App, Button, DatePicker, Form, Input, InputNumber, Select, Typography, theme } from 'antd'
 import { PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons'
@@ -23,8 +23,13 @@ export default function AddExpense() {
   const { token } = theme.useToken()
   const { message } = App.useApp()
   const router = useRouter()
-  const [categories] = useState<Category[]>(() => storage.getCategories())
-  const [spenders] = useState<Spender[]>(() => storage.getSpenders())
+  const [categories, setCategories] = useState<Category[]>([])
+  const [spenders, setSpenders] = useState<Spender[]>([])
+
+  useEffect(() => {
+    setCategories(storage.getCategories())
+    setSpenders(storage.getSpenders())
+  }, [])
   const [form] = Form.useForm<FormValues>()
 
   function handleSubmit(values: FormValues) {

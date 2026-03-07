@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { App, Button, ColorPicker, Form, Input, Popconfirm, Typography, Modal, theme, Empty } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Color } from 'antd/es/color-picker'
@@ -33,7 +33,11 @@ function SpenderAvatar({ name, color }: { name: string; color: string }) {
 export default function SpenderManager() {
   const { token } = theme.useToken()
   const { message } = App.useApp()
-  const [spenders, setSpenders] = useState<Spender[]>(() => storage.getSpenders())
+  const [spenders, setSpenders] = useState<Spender[]>([])
+
+  useEffect(() => {
+    setSpenders(storage.getSpenders())
+  }, [])
   const [editTarget, setEditTarget] = useState<Spender | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [addForm] = Form.useForm<SpenderFormValues>()
