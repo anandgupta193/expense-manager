@@ -1,72 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { App, Button, DatePicker, Form, Input, InputNumber, Select, Typography, theme } from 'antd'
+import { Button, DatePicker, Form, Input, InputNumber, Select, Typography, theme } from 'antd'
 import { PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons'
-import dayjs, { Dayjs } from 'dayjs'
-import { storage } from '@/lib/storage'
-import type { Category, Spender } from '@/lib/types'
+import dayjs from 'dayjs'
+import { useRouter } from 'next/navigation'
+import { useAddExpense } from '@/hooks/useAddExpense'
+import { requiredRule, minAmountRule } from '@/constants/validation'
 
 const { Title, Text } = Typography
 
-interface FormValues {
-  description: string
-  amount: number
-  categoryId: string
-  date: Dayjs
-  notes?: string
-  spenderId?: string
-}
-
 export default function AddExpense() {
   const { token } = theme.useToken()
-  const { message } = App.useApp()
   const router = useRouter()
-  const [categories, setCategories] = useState<Category[]>([])
-  const [spenders, setSpenders] = useState<Spender[]>([])
-
-  useEffect(() => {
-    setCategories(storage.getCategories())
-    setSpenders(storage.getSpenders())
-  }, [])
-  const [form] = Form.useForm<FormValues>()
-
-  function handleSubmit(values: FormValues) {
-    const expenses = storage.getExpenses()
-    const newExpense = {
-      id: crypto.randomUUID(),
-      description: values.description.trim(),
-      amount: values.amount,
-      categoryId: values.categoryId,
-      date: values.date.format('YYYY-MM-DD'),
-      notes: values.notes?.trim() || undefined,
-      spenderId: values.spenderId || undefined,
-    }
-    storage.setExpenses([newExpense, ...expenses])
-    message.success('Expense added!')
-    router.push('/')
-  }
-
-  const categoryOptions = categories.map((c) => ({
-    value: c.id,
-    label: (
-      <span className="flex items-center gap-2">
-        <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ background: c.color }} />
-        {c.name}
-      </span>
-    ),
-  }))
-
-  const spenderOptions = spenders.map((s) => ({
-    value: s.id,
-    label: (
-      <span className="flex items-center gap-2">
-        <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ background: s.avatarColor }} />
-        {s.name}
-      </span>
-    ),
-  }))
+  const { form, spenders, categoryOptions, spenderOptions, handleSubmit } = useAddExpense()
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
@@ -95,32 +41,21 @@ export default function AddExpense() {
           onFinish={handleSubmit}
           initialValues={{ date: dayjs(), categoryId: 'cat-other' }}
         >
-          <Form.Item
-            label="Description"
-            name="description"
-            rules={[{ required: true, message: 'Enter a description' }]}
-          >
+          <Form.Item label="Description" name="description" rules={[requiredRule('Enter a description')]}>
             <Input placeholder="e.g. Grocery shopping at BigBazaar" maxLength={120} size="large" />
           </Form.Item>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Form.Item
-              label="Amount (₹)"
-              name="amount"
-              rules={[
-                { required: true, message: 'Enter an amount' },
-                { type: 'number', min: 0.01, message: 'Must be greater than 0' },
-              ]}
-            >
+            <Form.Item label="Amount (₹)" name="amount" rules={[requiredRule('Enter an amount'), minAmountRule()]}>
               <InputNumber className="w-full" min={0.01} precision={2} placeholder="0.00" size="large" prefix="₹" />
             </Form.Item>
 
-            <Form.Item label="Date" name="date" rules={[{ required: true, message: 'Pick a date' }]}>
+            <Form.Item label="Date" name="date" rules={[requiredRule('Pick a date')]}>
               <DatePicker className="w-full" size="large" />
             </Form.Item>
           </div>
 
-          <Form.Item label="Category" name="categoryId" rules={[{ required: true, message: 'Select a category' }]}>
+          <Form.Item label="Category" name="categoryId" rules={[requiredRule('Select a category')]}>
             <Select options={categoryOptions} size="large" />
           </Form.Item>
 

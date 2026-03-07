@@ -1,5 +1,6 @@
 import type { Category, Expense, ReminderConfig, Spender, Theme } from './types'
 import { DEFAULT_CATEGORIES } from './defaultData'
+import reminderJson from '../config/reminder.json'
 
 const KEYS = {
   expenses: 'em-expenses',
@@ -47,6 +48,6 @@ export const storage = {
   getTheme: (): Theme => get<Theme>(KEYS.theme, 'light'),
   setTheme: (theme: Theme): void => set(KEYS.theme, theme),
 
-  getReminder: (): ReminderConfig => get<ReminderConfig>('em-reminder', { enabled: false, time: '23:00' }),
+  getReminder: (): ReminderConfig => get<ReminderConfig>('em-reminder', reminderJson as ReminderConfig),
   setReminder: (r: ReminderConfig): void => set('em-reminder', r),
 }

@@ -1,40 +1,20 @@
 'use client'
 
-import { useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button, theme } from 'antd'
-import {
-  DashboardOutlined,
-  PlusCircleOutlined,
-  TagsOutlined,
-  TeamOutlined,
-  SettingOutlined,
-  SunOutlined,
-  MoonOutlined,
-} from '@ant-design/icons'
+import { SunOutlined, MoonOutlined } from '@ant-design/icons'
 import { useTheme } from '@/app/providers'
 import { useReminder } from '@/lib/useReminder'
-
-const NAV_ITEMS = [
-  { href: '/', label: 'Dashboard', icon: <DashboardOutlined /> },
-  { href: '/add', label: 'Add Expense', icon: <PlusCircleOutlined /> },
-  { href: '/spenders', label: 'Spenders', icon: <TeamOutlined /> },
-  { href: '/categories', label: 'Categories', icon: <TagsOutlined /> },
-  { href: '/settings', label: 'Settings', icon: <SettingOutlined /> },
-]
+import { NAV_ITEMS } from '@/constants/navigation'
+import { useAppShell } from '@/hooks/useAppShell'
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { theme: appTheme, toggleTheme } = useTheme()
   const { token } = theme.useToken()
   useReminder()
-
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {})
-    }
-  }, [])
+  useAppShell()
 
   return (
     <div style={{ minHeight: '100vh', background: token.colorBgLayout }} className="flex flex-col">

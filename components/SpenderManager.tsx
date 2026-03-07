@@ -1,23 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { App, Button, ColorPicker, Form, Input, Popconfirm, Typography, Modal, theme, Empty } from 'antd'
+import { Button, ColorPicker, Form, Input, Popconfirm, Typography, Modal, theme, Empty } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import type { Color } from 'antd/es/color-picker'
-import { storage } from '@/lib/storage'
-import type { Spender } from '@/lib/types'
+import { useSpenderManager } from '@/hooks/useSpenderManager'
+import { requiredRule, uniqueNameRule } from '@/constants/validation'
 
 const { Title, Text } = Typography
-
-interface SpenderFormValues {
-  name: string
-  avatarColor: Color | string
-}
-
-function resolveColor(color: Color | string): string {
-  if (typeof color === 'string') return color
-  return color.toHexString()
-}
 
 function SpenderAvatar({ name, color }: { name: string; color: string }) {
   return (
@@ -32,59 +20,18 @@ function SpenderAvatar({ name, color }: { name: string; color: string }) {
 
 export default function SpenderManager() {
   const { token } = theme.useToken()
-  const { message } = App.useApp()
-  const [spenders, setSpenders] = useState<Spender[]>([])
-
-  useEffect(() => {
-    setSpenders(storage.getSpenders())
-  }, [])
-  const [editTarget, setEditTarget] = useState<Spender | null>(null)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [addForm] = Form.useForm<SpenderFormValues>()
-  const [editForm] = Form.useForm<SpenderFormValues>()
-
-  function persist(updated: Spender[]) {
-    storage.setSpenders(updated)
-    setSpenders(updated)
-  }
-
-  function handleAdd(values: SpenderFormValues) {
-    const avatarColor = resolveColor(values.avatarColor)
-    const newSpender: Spender = {
-      id: crypto.randomUUID(),
-      name: values.name.trim(),
-      avatarColor,
-    }
-    persist([...spenders, newSpender])
-    addForm.resetFields()
-    message.success('Spender added!')
-  }
-
-  function openEdit(spender: Spender) {
-    setEditTarget(spender)
-    editForm.setFieldsValue({ name: spender.name, avatarColor: spender.avatarColor })
-    setModalOpen(true)
-  }
-
-  function handleEditSave(values: SpenderFormValues) {
-    if (!editTarget) return
-    const avatarColor = resolveColor(values.avatarColor)
-    persist(spenders.map((s) => (s.id === editTarget.id ? { ...s, name: values.name.trim(), avatarColor } : s)))
-    setModalOpen(false)
-    setEditTarget(null)
-    message.success('Spender updated!')
-  }
-
-  function handleDelete(id: string) {
-    const expenses = storage.getExpenses()
-    const inUse = expenses.some((e) => e.spenderId === id)
-    if (inUse) {
-      message.warning('Cannot delete — this spender has expenses. Reassign them first.')
-      return
-    }
-    persist(spenders.filter((s) => s.id !== id))
-    message.success('Spender deleted.')
-  }
+  const {
+    spenders,
+    expenseCounts,
+    modalOpen,
+    addForm,
+    editForm,
+    handleAdd,
+    openEdit,
+    closeEdit,
+    handleEditSave,
+    handleDelete,
+  } = useSpenderManager()
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -114,15 +61,11 @@ export default function SpenderManager() {
               name="name"
               className="flex-1 !mb-0"
               rules={[
-                { required: true, message: 'Enter a name' },
-                {
-                  validator: (_, value) => {
-                    if (value && spenders.some((s) => s.name.toLowerCase() === value.trim().toLowerCase())) {
-                      return Promise.reject('A spender with this name already exists')
-                    }
-                    return Promise.resolve()
-                  },
-                },
+                requiredRule('Enter a name'),
+                uniqueNameRule(
+                  spenders.map((s) => s.name),
+                  'spender'
+                ),
               ]}
             >
               <Input placeholder="e.g. Alice" maxLength={40} size="large" />
@@ -158,8 +101,7 @@ export default function SpenderManager() {
         ) : (
           <div className="space-y-2">
             {spenders.map((spender) => {
-              const expenses = storage.getExpenses()
-              const count = expenses.filter((e) => e.spenderId === spender.id).length
+              const count = expenseCounts[spender.id] ?? 0
               return (
                 <div
                   key={spender.id}
@@ -206,24 +148,10 @@ export default function SpenderManager() {
       </div>
 
       {/* Edit modal */}
-      <Modal
-        title="Edit Spender"
-        open={modalOpen}
-        onCancel={() => {
-          setModalOpen(false)
-          setEditTarget(null)
-        }}
-        footer={null}
-        destroyOnHidden
-      >
+      <Modal title="Edit Spender" open={modalOpen} onCancel={closeEdit} footer={null} destroyOnHidden>
         <Form form={editForm} layout="vertical" onFinish={handleEditSave} className="pt-4">
           <div className="flex gap-4 items-end">
-            <Form.Item
-              label="Name"
-              name="name"
-              className="flex-1"
-              rules={[{ required: true, message: 'Enter a name' }]}
-            >
+            <Form.Item label="Name" name="name" className="flex-1" rules={[requiredRule('Enter a name')]}>
               <Input maxLength={40} size="large" />
             </Form.Item>
             <Form.Item label="Color" name="avatarColor">
@@ -232,7 +160,7 @@ export default function SpenderManager() {
           </div>
 
           <div className="flex gap-3 justify-end">
-            <Button onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button onClick={closeEdit}>Cancel</Button>
             <Button type="primary" htmlType="submit">
               Save Changes
             </Button>

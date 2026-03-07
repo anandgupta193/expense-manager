@@ -17,13 +17,31 @@ There are no tests yet. TypeScript errors surface during `npm run build`.
 
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Ant Design v6 · Tailwind CSS v4 · Recharts
 
+### Directory structure
+
+```
+config/           # JSON-driven defaults (categories, reminder)
+constants/        # Static values: navigation items, form validation factories
+hooks/            # Custom hooks — all state + logic, no JSX
+utils/            # Pure functions: formatters, expense utilities (may contain JSX in render helpers)
+lib/              # Data layer: types, storage, useReminder hook
+components/       # UI only — import from hooks/, constants/, utils/
+```
+
+**Architecture rules:**
+
+- **Hooks own all state and logic.** Components only render JSX.
+- **Utils are pure functions.** No hooks, no side effects.
+- **Constants are static values.** `constants/navigation.tsx` (NAV_ITEMS), `constants/validation.ts` (rule factories).
+- **Config drives defaults.** `config/categories.json` and `config/reminder.json` are the single source of truth for seeded data.
+
 ### Data layer — `lib/`
 
-All data lives in **localStorage only** (no backend). Three keys: `em-expenses`, `em-categories`, `em-theme`.
+All data lives in **localStorage only** (no backend). Keys: `em-expenses`, `em-categories`, `em-spenders`, `em-theme`, `em-reminder`.
 
-- `lib/types.ts` — `Expense`, `Category`, `Theme` interfaces
+- `lib/types.ts` — `Expense`, `Category`, `Spender`, `Theme`, `ReminderConfig` interfaces
 - `lib/storage.ts` — thin read/write wrappers; `getCategories()` seeds default data on first load
-- `lib/defaultData.ts` — 7 default categories with hex colors
+- `lib/defaultData.ts` — imports `DEFAULT_CATEGORIES` from `config/categories.json`
 
 ### Theme system
 
