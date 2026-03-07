@@ -1,5 +1,5 @@
 const CACHE_NAME = "em-v1";
-const STATIC_URLS = ["/", "/add", "/categories"];
+const STATIC_URLS = ["/", "/add", "/categories", "/settings"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

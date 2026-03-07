@@ -4,6 +4,12 @@ export interface Category {
   color: string;
 }
 
+export interface Spender {
+  id: string;
+  name: string;
+  avatarColor: string; // hex
+}
+
 export interface Expense {
   id: string;
   description: string;
@@ -11,6 +17,12 @@ export interface Expense {
   categoryId: string;
   date: string; // YYYY-MM-DD
   notes?: string;
+  spenderId?: string;
 }
 
 export type Theme = "light" | "dark";
+
+export interface ReminderConfig {
+  enabled: boolean;
+  time: string; // "HH:MM"
+}

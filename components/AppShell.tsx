@@ -8,21 +8,27 @@ import {
   DashboardOutlined,
   PlusCircleOutlined,
   TagsOutlined,
+  TeamOutlined,
+  SettingOutlined,
   SunOutlined,
   MoonOutlined,
 } from "@ant-design/icons";
 import { useTheme } from "@/app/providers";
+import { useReminder } from "@/lib/useReminder";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: <DashboardOutlined /> },
   { href: "/add", label: "Add Expense", icon: <PlusCircleOutlined /> },
+  { href: "/spenders", label: "Spenders", icon: <TeamOutlined /> },
   { href: "/categories", label: "Categories", icon: <TagsOutlined /> },
+  { href: "/settings", label: "Settings", icon: <SettingOutlined /> },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { theme: appTheme, toggleTheme } = useTheme();
   const { token } = theme.useToken();
+  useReminder();
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
