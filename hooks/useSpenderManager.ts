@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { App, Form } from 'antd'
 import type { Color } from 'antd/es/color-picker'
-import { storage } from '@/lib/storage'
-import type { Expense, Spender } from '@/lib/types'
+import { useAppData, useAuthContext } from '@/app/providers'
+import type { Spender } from '@/lib/types'
 import { resolveColor } from '@/utils/formatters'
 
 interface SpenderFormValues {
@@ -13,27 +13,17 @@ interface SpenderFormValues {
 }
 
 export function useSpenderManager() {
+  const { user } = useAuthContext()
   const { message } = App.useApp()
-  const [spenders, setSpenders] = useState<Spender[]>([])
-  const [expenses, setExpenses] = useState<Expense[]>([])
+  const { expenses, spenders, setSpenders } = useAppData()
   const [editTarget, setEditTarget] = useState<Spender | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [addForm] = Form.useForm<SpenderFormValues>()
   const [editForm] = Form.useForm<SpenderFormValues>()
 
-  useEffect(() => {
-    setSpenders(storage.getSpenders())
-    setExpenses(storage.getExpenses())
-  }, [])
-
   const expenseCounts = Object.fromEntries(
     spenders.map((s) => [s.id, expenses.filter((e) => e.spenderId === s.id).length])
   )
-
-  function persist(updated: Spender[]) {
-    storage.setSpenders(updated)
-    setSpenders(updated)
-  }
 
   function handleAdd(values: SpenderFormValues) {
     const avatarColor = resolveColor(values.avatarColor)
@@ -42,7 +32,7 @@ export function useSpenderManager() {
       name: values.name.trim(),
       avatarColor,
     }
-    persist([...spenders, newSpender])
+    setSpenders([...spenders, newSpender])
     addForm.resetFields()
     message.success('Spender added!')
   }
@@ -61,7 +51,7 @@ export function useSpenderManager() {
   function handleEditSave(values: SpenderFormValues) {
     if (!editTarget) return
     const avatarColor = resolveColor(values.avatarColor)
-    persist(spenders.map((s) => (s.id === editTarget.id ? { ...s, name: values.name.trim(), avatarColor } : s)))
+    setSpenders(spenders.map((s) => (s.id === editTarget.id ? { ...s, name: values.name.trim(), avatarColor } : s)))
     setModalOpen(false)
     setEditTarget(null)
     message.success('Spender updated!')
@@ -73,7 +63,7 @@ export function useSpenderManager() {
       message.warning('Cannot delete — this spender has expenses. Reassign them first.')
       return
     }
-    persist(spenders.filter((s) => s.id !== id))
+    setSpenders(spenders.filter((s) => s.id !== id))
     message.success('Spender deleted.')
   }
 
@@ -89,5 +79,6 @@ export function useSpenderManager() {
     closeEdit,
     handleEditSave,
     handleDelete,
+    currentUserId: user?.uid ?? null,
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, ColorPicker, Form, Input, Popconfirm, Typography, Modal, theme, Empty } from 'antd'
+import { Button, ColorPicker, Form, Input, Popconfirm, Typography, Modal, theme, Empty, Tag } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useSpenderManager } from '@/hooks/useSpenderManager'
 import { requiredRule, uniqueNameRule } from '@/constants/validation'
@@ -31,6 +31,7 @@ export default function SpenderManager() {
     closeEdit,
     handleEditSave,
     handleDelete,
+    currentUserId,
   } = useSpenderManager()
 
   return (
@@ -117,9 +118,16 @@ export default function SpenderManager() {
                     <Text strong className="block truncate">
                       {spender.name}
                     </Text>
-                    <Text type="secondary" className="text-xs">
-                      {count} expense{count !== 1 ? 's' : ''}
-                    </Text>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Text type="secondary" className="text-xs">
+                        {count} expense{count !== 1 ? 's' : ''}
+                      </Text>
+                      {spender.id === currentUserId && (
+                        <Tag color="blue" className="!text-xs !py-0 !leading-4">
+                          You
+                        </Tag>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex gap-1 flex-shrink-0">
@@ -135,7 +143,6 @@ export default function SpenderManager() {
                       okText="Delete"
                       okButtonProps={{ danger: true }}
                       cancelText="Cancel"
-                      disabled={count > 0}
                     >
                       <Button type="text" danger icon={<DeleteOutlined />} />
                     </Popconfirm>
