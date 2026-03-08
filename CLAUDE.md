@@ -15,7 +15,7 @@ There are no tests yet. TypeScript errors surface during `npm run build`.
 
 ## Architecture
 
-**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Ant Design v6 · Tailwind CSS v4 · Recharts
+**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Ant Design v6 · Tailwind CSS v4 · Recharts · Firebase (Auth + Firestore)
 
 ### Directory structure
 
@@ -24,7 +24,7 @@ config/           # JSON-driven defaults (categories, reminder)
 constants/        # Static values: navigation items, form validation factories
 hooks/            # Custom hooks — all state + logic, no JSX
 utils/            # Pure functions: formatters, expense utilities (may contain JSX in render helpers)
-lib/              # Data layer: types, storage, useReminder hook
+lib/              # Data layer: types, storage, firebase init, firestore API
 components/       # UI only — import from hooks/, constants/, utils/
 ```
 
@@ -37,19 +37,25 @@ components/       # UI only — import from hooks/, constants/, utils/
 
 ### Data layer — `lib/`
 
-All data lives in **localStorage only** (no backend). Keys: `em-expenses`, `em-categories`, `em-spenders`, `em-theme`, `em-reminder`.
+Expenses, categories, and spenders live in **Firestore** (`users/{uid}/expenses|categories|spenders`). Theme and reminder config remain in **localStorage**.
 
 - `lib/types.ts` — `Expense`, `Category`, `Spender`, `Theme`, `ReminderConfig` interfaces
-- `lib/storage.ts` — thin read/write wrappers; `getCategories()` seeds default data on first load
+- `lib/storage.ts` — localStorage wrappers for theme + reminder only
+- `lib/firebase.ts` — lazy Firebase singletons via `getFirebaseAuth()` / `getFirebaseDb()` (avoids SSR failures)
+- `lib/firestore.ts` — async Firestore API: `fsGetExpenses`, `fsSetExpenses`, `fsGetCategories`, `fsSetCategories`, `fsGetSpenders`, `fsSetSpenders`, `fsSeedDefaultCategories`, `fsSeedDefaultSpender`
 - `lib/defaultData.ts` — imports `DEFAULT_CATEGORIES` from `config/categories.json`
 
-### Theme system
+### Auth and data contexts — `app/providers.tsx`
 
-`app/providers.tsx` is a `"use client"` component that:
+`app/providers.tsx` exposes three contexts:
 
-1. Wraps everything in antd `ConfigProvider` (switches `darkAlgorithm` / `defaultAlgorithm`)
-2. Exposes `useTheme()` context with `{ theme, toggleTheme }`
-3. Toggles `.dark` class on `<html>` for Tailwind dark variants
+| Export             | Hook                              | What it provides                                                                           |
+| ------------------ | --------------------------------- | ------------------------------------------------------------------------------------------ |
+| `useTheme()`       | `ThemeProvider`                   | `{ theme, toggleTheme }`                                                                   |
+| `useAuthContext()` | `AuthProvider` → `useAuth`        | `{ user, loading, signInWithGoogle, signOut }`                                             |
+| `useAppData()`     | `DataProvider` → `useDataContext` | `{ expenses, categories, spenders, dataLoading, setExpenses, setCategories, setSpenders }` |
+
+**`DataProvider`** is only mounted when `user` is non-null (rendered by `AppShell` after auth check). All data hooks read from `useAppData()` — they do **not** touch localStorage or Firestore directly.
 
 **Do not use Tailwind `dark:` variants for colors** — antd tokens handle component colors. Use `theme.useToken()` for any custom color values so they adapt to the active algorithm.
 
@@ -61,10 +67,15 @@ Each page file is a minimal server component that imports a single `"use client"
 app/page.tsx              → components/Dashboard.tsx
 app/add/page.tsx          → components/AddExpense.tsx
 app/categories/page.tsx   → components/CategoryManager.tsx
+app/auth/page.tsx         → components/SignInPage.tsx
 app/layout.tsx            → wraps with <Providers><AppShell>
 ```
 
-`components/AppShell.tsx` renders the sticky top nav (desktop) and fixed bottom tab bar (mobile) and registers the service worker.
+`components/AppShell.tsx` renders the sticky top nav (desktop) and fixed bottom tab bar (mobile), registers the service worker, and handles auth UI (Google sign-in button / user avatar + sign-out menu).
+
+### Environment setup
+
+Copy `.env.local.example` to `.env.local` and fill in Firebase project values (`NEXT_PUBLIC_FIREBASE_*`). Without these, Firebase init is skipped and the app shows a sign-in page that does nothing.
 
 ### PWA
 

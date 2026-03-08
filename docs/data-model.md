@@ -20,7 +20,7 @@ interface Category {
 }
 
 interface Spender {
-  id: string // crypto.randomUUID()
+  id: string // user.uid for the seeded self-spender; crypto.randomUUID() for others
   name: string
   avatarColor: string // hex, used for avatar background
 }
@@ -33,30 +33,52 @@ interface ReminderConfig {
 }
 ```
 
+## Firestore Schema
+
+Primary data store. Path: `users/{uid}/{collection}/{docId}`.
+
+| Collection   | Doc ID        | Type            | Notes                                           |
+| ------------ | ------------- | --------------- | ----------------------------------------------- |
+| `expenses`   | `expense.id`  | `Expense`       | `undefined` fields stripped before write        |
+| `categories` | `category.id` | `Category`      | Seeded on first sign-in if empty                |
+| `spenders`   | `spender.id`  | `Spender`       | Seeded with user's own spender on first sign-in |
+| `settings`   | `"data"`      | `CloudSettings` | Merged; holds `theme`, `reminder`, `migrated`   |
+
+### Firestore API (`lib/firestore.ts`)
+
+```typescript
+fsGetExpenses(uid)                    → Promise<Expense[]>
+fsSetExpenses(uid, expenses)          → Promise<void>   // batch replace
+
+fsGetCategories(uid)                  → Promise<Category[]>
+fsSetCategories(uid, categories)      → Promise<void>   // batch replace
+
+fsGetSpenders(uid)                    → Promise<Spender[]>
+fsSetSpenders(uid, spenders)          → Promise<void>   // batch replace
+
+fsGetSettings(uid)                    → Promise<CloudSettings>
+fsSetSettings(uid, settings)          → Promise<void>   // merge
+
+fsSeedDefaultCategories(uid)          → Promise<void>
+fsSeedDefaultSpender(uid, spender)    → Promise<void>
+```
+
+All writes use Firestore `writeBatch` for atomicity (batch replace = delete all + re-write).
+
 ## localStorage Schema
 
-| Key             | Type                | Default                              |
-| --------------- | ------------------- | ------------------------------------ |
-| `em-expenses`   | `Expense[]`         | `[]`                                 |
-| `em-categories` | `Category[]`        | seeded from `config/categories.json` |
-| `em-spenders`   | `Spender[]`         | `[]`                                 |
-| `em-theme`      | `'light' \| 'dark'` | `'light'`                            |
-| `em-reminder`   | `ReminderConfig`    | `{ enabled: false, time: "23:00" }`  |
+Used only for **theme** and **reminder** (not synced to Firestore).
 
-## Storage API (`lib/storage.ts`)
+| Key           | Type                | Default                             |
+| ------------- | ------------------- | ----------------------------------- |
+| `em-theme`    | `'light' \| 'dark'` | `'light'`                           |
+| `em-reminder` | `ReminderConfig`    | `{ enabled: false, time: "23:00" }` |
+
+### Storage API (`lib/storage.ts`)
 
 All methods are SSR-safe (guard against `typeof window === 'undefined'`).
 
 ```typescript
-storage.getExpenses()   → Expense[]
-storage.setExpenses(expenses: Expense[]) → void
-
-storage.getCategories() → Category[]   // seeds defaults on first call
-storage.setCategories(categories: Category[]) → void
-
-storage.getSpenders()   → Spender[]
-storage.setSpenders(spenders: Spender[]) → void
-
 storage.getTheme()      → Theme
 storage.setTheme(theme: Theme) → void
 
@@ -64,9 +86,11 @@ storage.getReminder()   → ReminderConfig
 storage.setReminder(config: ReminderConfig) → void
 ```
 
-## Default Categories (`config/categories.json`)
+## Default Seeding (new users)
 
-Seeded once on first `getCategories()` call if `em-categories` is absent:
+On first sign-in, `useDataContext` checks if Firestore `categories` is empty and seeds:
+
+### Default Categories (`config/categories.json`)
 
 | ID                  | Name          | Color     |
 | ------------------- | ------------- | --------- |
@@ -77,6 +101,10 @@ Seeded once on first `getCategories()` call if `em-categories` is absent:
 | `cat-health`        | Health        | `#F6AD55` |
 | `cat-utilities`     | Utilities     | `#DDA0DD` |
 | `cat-other`         | Other         | `#94A3B8` |
+
+### Default Spender
+
+A spender is seeded with `id = user.uid`, `name = user.displayName ?? user.email ?? 'Me'`, `avatarColor = '#6366f1'`. Because `id === user.uid`, `useSpenderManager` can identify this spender as "You" via `currentUserId`.
 
 Custom categories get UUID ids; built-in ones use the `cat-*` prefix.
 
@@ -117,4 +145,4 @@ erDiagram
 
 ## ID Generation
 
-All new records use `crypto.randomUUID()`. No sequential IDs.
+All new records use `crypto.randomUUID()` except the seeded self-spender which uses `user.uid`.

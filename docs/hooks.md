@@ -2,6 +2,51 @@
 
 All hooks are `"use client"`. They own all state and logic — components only call them and render the returned values.
 
+---
+
+## useAuth (`hooks/useAuth.ts`)
+
+Wraps Firebase `onAuthStateChanged`. Used inside `AuthProvider` in `app/providers.tsx`.
+
+**Returns (`AuthState`):**
+
+```typescript
+{
+  user: User | null // Firebase User object; null when signed out
+  loading: boolean // true until first auth state resolved
+  signInWithGoogle: () => Promise<void>
+  signOut: () => Promise<void>
+}
+```
+
+**Side effects:** Subscribes to `onAuthStateChanged` on mount; unsubscribes on unmount.
+
+---
+
+## useDataContext (`hooks/useDataContext.ts`)
+
+Loads all Firestore data for the authenticated user. Only called from `DataProvider` in `app/providers.tsx`.
+
+**Parameters:** `user: User`
+
+**Returns (`DataState`):**
+
+```typescript
+{
+  expenses: Expense[]
+  categories: Category[]
+  spenders: Spender[]
+  dataLoading: boolean
+  setExpenses: (expenses: Expense[]) => void    // updates state + Firestore
+  setCategories: (categories: Category[]) => void
+  setSpenders: (spenders: Spender[]) => void
+}
+```
+
+**Side effects:** On mount, reads all three Firestore collections in parallel. Seeds defaults (categories + self-spender) if collections are empty (new user). Each setter updates local state optimistically and writes to Firestore async.
+
+---
+
 ## useAddExpense (`hooks/useAddExpense.ts`)
 
 Manages the Add Expense form.
@@ -18,8 +63,8 @@ Manages the Add Expense form.
 }
 ```
 
-**Side effects:** On mount, reads categories and spenders from localStorage.
-**On submit:** Prepends new expense to `em-expenses`, shows success toast, navigates to `/`.
+**Side effects:** Reads categories and spenders from `useAppData()` context (no direct localStorage/Firestore access).
+**On submit:** Prepends new expense via `setExpenses`, shows success toast, navigates to `/`.
 
 ---
 
@@ -49,7 +94,7 @@ Manages all Dashboard state: expenses, filter, edit modal, derived stats, chart 
 }
 ```
 
-**Side effects:** On mount, reads all three data stores (expenses, categories, spenders).
+**Data source:** `useAppData()` context — no direct storage access.
 
 ---
 
@@ -74,6 +119,7 @@ Manages category CRUD.
 ```
 
 **Guards:** `handleDelete` checks `expenseCounts[id] > 0` and shows error if so.
+**Data source:** `useAppData()` context.
 
 ---
 
@@ -87,17 +133,21 @@ Manages spender CRUD.
 {
   spenders: Spender[]
   expenseCounts: Record<string, number>  // spenderId → count
-  form: FormInstance
+  editTarget: Spender | null
+  modalOpen: boolean
+  addForm: FormInstance
   editForm: FormInstance
-  editingSpender: Spender | null
-  setEditingSpender: (s: Spender | null) => void
   handleAdd: (values: { name: string; avatarColor: Color | string }) => void
-  handleEdit: (values: { name: string; avatarColor: Color | string }) => void
+  openEdit: (spender: Spender) => void
+  closeEdit: () => void
+  handleEditSave: (values: { name: string; avatarColor: Color | string }) => void
   handleDelete: (id: string) => void
+  currentUserId: string | null         // user.uid — used to show "You" tag
 }
 ```
 
-**Guards:** `handleDelete` checks `expenseCounts[id] > 0` and shows error if so.
+**Guards:** `handleDelete` shows Popconfirm; if spender has expenses, `message.warning` fires and delete is aborted.
+**Data source:** `useAppData()` context + `useAuthContext()` for `currentUserId`.
 
 ---
 
@@ -115,7 +165,7 @@ Manages reminder notification config.
 }
 ```
 
-**Side effects:** `handleToggle(true)` calls `Notification.requestPermission()`. All changes persist immediately to `em-reminder`.
+**Side effects:** `handleToggle(true)` calls `Notification.requestPermission()`. All changes persist immediately to `em-reminder` in localStorage.
 
 ---
 
