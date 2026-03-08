@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { App, ConfigProvider, theme as antTheme } from 'antd'
 import { storage } from '@/lib/storage'
 import type { Theme } from '@/lib/types'
+import { FONT_FAMILY_CSS_VAR } from '@/config/fonts'
 
 interface ThemeContextType {
   theme: Theme
@@ -41,7 +42,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           token: {
             colorPrimary: '#6366f1',
             borderRadius: 8,
-            fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+            fontFamily: `var(${FONT_FAMILY_CSS_VAR})`,
           },
         }}
       >

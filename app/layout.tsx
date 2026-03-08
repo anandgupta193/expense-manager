@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Outfit } from 'next/font/google'
 import { Providers } from './providers'
 import AppShell from '@/components/AppShell'
 import './globals.css'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+// Variable name must match PRIMARY_FONT_CSS_VAR in config/fonts.ts
+const outfit = Outfit({
+  variable: '--font-primary',
   subsets: ['latin'],
 })
 
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} antialiased`}>
+      <body className={`${outfit.variable} antialiased`}>
         <Providers>
           <AppShell>{children}</AppShell>
         </Providers>

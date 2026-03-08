@@ -13,7 +13,9 @@
 }
 
 body {
+  /* --font-primary is injected here by next/font; --font-family references it */
+  --font-family: var(--font-primary), 'Noto Sans JP', 'Noto Sans', Vazirmatn, sans-serif;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-family);
 }
