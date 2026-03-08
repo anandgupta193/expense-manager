@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Form, theme } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { storage } from '@/lib/storage'
-import type { Category, Expense, Spender } from '@/lib/types'
+import { useAppData } from '@/app/providers'
+import type { Expense } from '@/lib/types'
 import { buildCategoryOptions, buildSpenderOptions, buildTableColumns, currentMonthTotal } from '@/utils/expenseUtils'
 
 interface EditFormValues {
@@ -25,19 +25,11 @@ export interface ChartData {
 
 export function useDashboard() {
   const { token } = theme.useToken()
-  const [expenses, setExpenses] = useState<Expense[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [spenders, setSpenders] = useState<Spender[]>([])
+  const { expenses, categories, spenders, setExpenses } = useAppData()
   const [selectedSpenderIds, setSelectedSpenderIds] = useState<string[]>([])
   const [editTarget, setEditTarget] = useState<Expense | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [form] = Form.useForm<EditFormValues>()
-
-  useEffect(() => {
-    setExpenses(storage.getExpenses())
-    setCategories(storage.getCategories())
-    setSpenders(storage.getSpenders())
-  }, [])
 
   const catMap = Object.fromEntries(categories.map((c) => [c.id, c]))
   const spenderMap = Object.fromEntries(spenders.map((s) => [s.id, s]))
@@ -84,9 +76,7 @@ export function useDashboard() {
   }
 
   function handleDelete(id: string) {
-    const updated = expenses.filter((e) => e.id !== id)
-    storage.setExpenses(updated)
-    setExpenses(updated)
+    setExpenses(expenses.filter((e) => e.id !== id))
   }
 
   function handleEditSave(values: EditFormValues) {
@@ -104,7 +94,6 @@ export function useDashboard() {
           }
         : e
     )
-    storage.setExpenses(updated)
     setExpenses(updated)
     setModalOpen(false)
     setEditTarget(null)

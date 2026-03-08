@@ -1,11 +1,7 @@
-import type { Category, Expense, ReminderConfig, Spender, Theme } from './types'
-import { DEFAULT_CATEGORIES } from './defaultData'
+import type { ReminderConfig, Theme } from './types'
 import reminderJson from '../config/reminder.json'
 
 const KEYS = {
-  expenses: 'em-expenses',
-  categories: 'em-categories',
-  spenders: 'em-spenders',
   theme: 'em-theme',
 } as const
 
@@ -24,27 +20,6 @@ function set(key: string, value: unknown): void {
 }
 
 export const storage = {
-  getExpenses: (): Expense[] => get<Expense[]>(KEYS.expenses, []),
-  setExpenses: (expenses: Expense[]): void => set(KEYS.expenses, expenses),
-
-  getCategories: (): Category[] => {
-    if (typeof window === 'undefined') return DEFAULT_CATEGORIES
-    const raw = localStorage.getItem(KEYS.categories)
-    if (!raw) {
-      set(KEYS.categories, DEFAULT_CATEGORIES)
-      return DEFAULT_CATEGORIES
-    }
-    try {
-      return JSON.parse(raw) as Category[]
-    } catch {
-      return DEFAULT_CATEGORIES
-    }
-  },
-  setCategories: (cats: Category[]): void => set(KEYS.categories, cats),
-
-  getSpenders: (): Spender[] => get<Spender[]>(KEYS.spenders, []),
-  setSpenders: (spenders: Spender[]): void => set(KEYS.spenders, spenders),
-
   getTheme: (): Theme => get<Theme>(KEYS.theme, 'light'),
   setTheme: (theme: Theme): void => set(KEYS.theme, theme),
 

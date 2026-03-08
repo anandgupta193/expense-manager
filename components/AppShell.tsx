@@ -2,19 +2,51 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Button, theme } from 'antd'
-import { SunOutlined, MoonOutlined } from '@ant-design/icons'
-import { useTheme } from '@/app/providers'
+import { Avatar, Button, Dropdown, Spin, theme } from 'antd'
+import { SunOutlined, MoonOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons'
+import type { User } from 'firebase/auth'
+import { useTheme, useAuthContext, DataProvider, useAppData } from '@/app/providers'
 import { useReminder } from '@/lib/useReminder'
 import { NAV_ITEMS } from '@/constants/navigation'
 import { useAppShell } from '@/hooks/useAppShell'
+import SignInPage from '@/components/SignInPage'
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-  const { theme: appTheme, toggleTheme } = useTheme()
+// ── Authenticated shell (mounts after DataProvider) ───────────────────────────
+
+function AuthenticatedShell({
+  user,
+  signOut,
+  children,
+}: {
+  user: User
+  signOut: () => Promise<void>
+  children: React.ReactNode
+}) {
   const { token } = theme.useToken()
+  const { theme: appTheme, toggleTheme } = useTheme()
+  const { dataLoading } = useAppData()
+  const pathname = usePathname()
   useReminder()
   useAppShell()
+
+  if (dataLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: token.colorBgLayout }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  const userMenuItems = [
+    {
+      key: 'signout',
+      icon: <LogoutOutlined />,
+      label: 'Sign out',
+      onClick: async () => {
+        await signOut()
+      },
+    },
+  ]
 
   return (
     <div style={{ minHeight: '100vh', background: token.colorBgLayout }} className="flex flex-col">
@@ -55,14 +87,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          {/* Theme toggle */}
-          <Button
-            type="text"
-            shape="circle"
-            icon={appTheme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
-            onClick={toggleTheme}
-            title={appTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          />
+          {/* Right side: theme toggle + auth */}
+          <div className="flex items-center gap-2">
+            <Button
+              type="text"
+              shape="circle"
+              icon={appTheme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
+              onClick={toggleTheme}
+              title={appTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            />
+
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
+              <Avatar
+                src={user.photoURL}
+                icon={!user.photoURL ? <UserOutlined /> : undefined}
+                style={{ cursor: 'pointer', border: `2px solid ${token.colorPrimary}` }}
+                size={36}
+              />
+            </Dropdown>
+          </div>
         </div>
       </header>
 
@@ -95,5 +138,32 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         })}
       </nav>
     </div>
+  )
+}
+
+// ── AppShell — auth guard + data provider ─────────────────────────────────────
+
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  const { token } = theme.useToken()
+  const { user, loading, signOut } = useAuthContext()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: token.colorBgLayout }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <SignInPage />
+  }
+
+  return (
+    <DataProvider user={user}>
+      <AuthenticatedShell user={user} signOut={signOut}>
+        {children}
+      </AuthenticatedShell>
+    </DataProvider>
   )
 }

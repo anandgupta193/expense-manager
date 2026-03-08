@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { App, Form } from 'antd'
 import type { Color } from 'antd/es/color-picker'
-import { storage } from '@/lib/storage'
-import type { Category, Expense } from '@/lib/types'
+import { useAppData } from '@/app/providers'
+import type { Category } from '@/lib/types'
 import { resolveColor } from '@/utils/formatters'
 
 interface CategoryFormValues {
@@ -14,26 +14,15 @@ interface CategoryFormValues {
 
 export function useCategoryManager() {
   const { message } = App.useApp()
-  const [categories, setCategories] = useState<Category[]>([])
-  const [expenses, setExpenses] = useState<Expense[]>([])
+  const { categories, expenses, setCategories } = useAppData()
   const [editTarget, setEditTarget] = useState<Category | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [addForm] = Form.useForm<CategoryFormValues>()
   const [editForm] = Form.useForm<CategoryFormValues>()
 
-  useEffect(() => {
-    setCategories(storage.getCategories())
-    setExpenses(storage.getExpenses())
-  }, [])
-
   const expenseCounts = Object.fromEntries(
     categories.map((c) => [c.id, expenses.filter((e) => e.categoryId === c.id).length])
   )
-
-  function persist(updated: Category[]) {
-    storage.setCategories(updated)
-    setCategories(updated)
-  }
 
   function handleAdd(values: CategoryFormValues) {
     const color = resolveColor(values.color)
@@ -42,7 +31,7 @@ export function useCategoryManager() {
       name: values.name.trim(),
       color,
     }
-    persist([...categories, newCat])
+    setCategories([...categories, newCat])
     addForm.resetFields()
     message.success('Category added!')
   }
@@ -61,7 +50,7 @@ export function useCategoryManager() {
   function handleEditSave(values: CategoryFormValues) {
     if (!editTarget) return
     const color = resolveColor(values.color)
-    persist(categories.map((c) => (c.id === editTarget.id ? { ...c, name: values.name.trim(), color } : c)))
+    setCategories(categories.map((c) => (c.id === editTarget.id ? { ...c, name: values.name.trim(), color } : c)))
     setModalOpen(false)
     setEditTarget(null)
     message.success('Category updated!')
@@ -73,7 +62,7 @@ export function useCategoryManager() {
       message.warning('Cannot delete — this category has expenses. Reassign them first.')
       return
     }
-    persist(categories.filter((c) => c.id !== id))
+    setCategories(categories.filter((c) => c.id !== id))
     message.success('Category deleted.')
   }
 
