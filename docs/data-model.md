@@ -31,6 +31,12 @@ interface ReminderConfig {
   enabled: boolean
   time: string // "HH:MM" 24-hour
 }
+
+interface BudgetConfig {
+  enabled: boolean
+  // per-category budget limits and/or a global monthly limit
+  [key: string]: unknown
+}
 ```
 
 ## Firestore Schema
@@ -67,12 +73,13 @@ All writes use Firestore `writeBatch` for atomicity (batch replace = delete all 
 
 ## localStorage Schema
 
-Used only for **theme** and **reminder** (not synced to Firestore).
+Used only for **theme**, **reminder**, and **budget** (not synced to Firestore).
 
 | Key           | Type                | Default                             |
 | ------------- | ------------------- | ----------------------------------- |
 | `em-theme`    | `'light' \| 'dark'` | `'light'`                           |
 | `em-reminder` | `ReminderConfig`    | `{ enabled: false, time: "23:00" }` |
+| `em-budget`   | `BudgetConfig`      | `{ enabled: false }`                |
 
 ### Storage API (`lib/storage.ts`)
 
@@ -84,6 +91,9 @@ storage.setTheme(theme: Theme) → void
 
 storage.getReminder()   → ReminderConfig
 storage.setReminder(config: ReminderConfig) → void
+
+storage.getBudget()     → BudgetConfig
+storage.setBudget(config: BudgetConfig) → void
 ```
 
 ## Default Seeding (new users)

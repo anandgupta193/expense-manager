@@ -37,10 +37,10 @@ components/       # UI only — import from hooks/, constants/, utils/
 
 ### Data layer — `lib/`
 
-Expenses, categories, and spenders live in **Firestore** (`users/{uid}/expenses|categories|spenders`). Theme and reminder config remain in **localStorage**.
+Expenses, categories, and spenders live in **Firestore** (`users/{uid}/expenses|categories|spenders`). Theme, reminder, and budget config remain in **localStorage**.
 
-- `lib/types.ts` — `Expense`, `Category`, `Spender`, `Theme`, `ReminderConfig` interfaces
-- `lib/storage.ts` — localStorage wrappers for theme + reminder only
+- `lib/types.ts` — `Expense`, `Category`, `Spender`, `Theme`, `ReminderConfig`, `BudgetConfig` interfaces
+- `lib/storage.ts` — localStorage wrappers for theme, reminder, and budget
 - `lib/firebase.ts` — lazy Firebase singletons via `getFirebaseAuth()` / `getFirebaseDb()` (avoids SSR failures)
 - `lib/firestore.ts` — async Firestore API: `fsGetExpenses`, `fsSetExpenses`, `fsGetCategories`, `fsSetCategories`, `fsGetSpenders`, `fsSetSpenders`, `fsSeedDefaultCategories`, `fsSeedDefaultSpender`
 - `lib/defaultData.ts` — imports `DEFAULT_CATEGORIES` from `config/categories.json`
@@ -65,8 +65,9 @@ Each page file is a minimal server component that imports a single `"use client"
 
 ```
 app/page.tsx              → components/Dashboard.tsx
-app/add/page.tsx          → components/AddExpense.tsx
 app/categories/page.tsx   → components/CategoryManager.tsx
+app/spenders/page.tsx     → components/SpenderManager.tsx
+app/settings/page.tsx     → components/ReminderSettings.tsx + BudgetSettings.tsx
 app/auth/page.tsx         → components/SignInPage.tsx
 app/layout.tsx            → wraps with <Providers><AppShell>
 ```

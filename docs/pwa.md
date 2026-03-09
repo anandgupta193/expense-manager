@@ -14,7 +14,7 @@ flowchart TD
     CF --> RS
 ```
 
-**Static pre-cache on install:** `/`, `/add`, `/categories`, `/settings`
+**Static pre-cache on install:** `/`, `/categories`, `/spenders`, `/settings`
 
 **Cache name:** `em-v1` — bump this string to force cache invalidation on deploy.
 

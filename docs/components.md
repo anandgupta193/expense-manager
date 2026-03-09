@@ -51,7 +51,7 @@ All components are `"use client"`. They render JSX only — all state and logic 
 
 ## Dashboard (`components/Dashboard.tsx`)
 
-**Responsibility:** Main overview page. Displays totals, pie chart, per-category breakdown, and full expense table with edit/delete.
+**Responsibility:** Main overview page. Displays totals, pie chart, per-category breakdown, and full expense table with edit/delete. Add expense is triggered from a floating action button on Dashboard (no separate `/add` route).
 
 **Hook:** `useDashboard()`
 
@@ -61,27 +61,7 @@ All components are `"use client"`. They render JSX only — all state and logic 
 - Spender filter — dropdown to filter expense table and chart by spender
 - Pie chart (Recharts `PieChart`) — category breakdown, color-coded
 - Expense table (antd `Table`) — columns: Date, Description, Category, Amount, Spender, Actions
-- Edit modal — inline edit of any expense field
-
----
-
-## AddExpense (`components/AddExpense.tsx`)
-
-**Responsibility:** Form to record a new expense. Redirects to `/` on success.
-
-**Hook:** `useAddExpense()`
-
-**Form fields:**
-| Field | Component | Required |
-|-------|-----------|----------|
-| Description | Input | Yes |
-| Amount (₹) | InputNumber | Yes (> 0) |
-| Date | DatePicker | Yes |
-| Category | Select | Yes |
-| Spender | Select | No |
-| Notes | TextArea | No |
-
-On submit: saves via `setExpenses` (Firestore + state), shows success message, pushes to `/`.
+- Add/Edit modal — inline form for adding a new expense or editing an existing one
 
 ---
 
@@ -131,6 +111,21 @@ On submit: saves via `setExpenses` (Firestore + state), shows success message, p
 - Time picker (antd `TimePicker`) — sets fire time in `HH:MM`
 
 Settings are persisted immediately to localStorage on change.
+
+---
+
+## BudgetSettings (`components/BudgetSettings.tsx`)
+
+**Responsibility:** Configure monthly budget limits per category (or overall).
+
+**Hook:** `useBudgetSettings()`
+
+**UI:**
+
+- Enable/disable budget tracking toggle
+- Budget amount inputs per category (or a global monthly limit)
+
+Settings are persisted immediately to `em-budget` in localStorage on change.
 
 ---
 

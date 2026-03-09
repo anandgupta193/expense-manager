@@ -47,27 +47,6 @@ Loads all Firestore data for the authenticated user. Only called from `DataProvi
 
 ---
 
-## useAddExpense (`hooks/useAddExpense.ts`)
-
-Manages the Add Expense form.
-
-**Returns:**
-
-```typescript
-{
-  form: FormInstance<AddExpenseFormValues>
-  spenders: Spender[]
-  categoryOptions: SelectOption[]   // { value, label } with color dot
-  spenderOptions: SelectOption[]    // { value, label } with avatar
-  handleSubmit: (values: AddExpenseFormValues) => void
-}
-```
-
-**Side effects:** Reads categories and spenders from `useAppData()` context (no direct localStorage/Firestore access).
-**On submit:** Prepends new expense via `setExpenses`, shows success toast, navigates to `/`.
-
----
-
 ## useDashboard (`hooks/useDashboard.ts`)
 
 Manages all Dashboard state: expenses, filter, edit modal, derived stats, chart data.
@@ -166,6 +145,23 @@ Manages reminder notification config.
 ```
 
 **Side effects:** `handleToggle(true)` calls `Notification.requestPermission()`. All changes persist immediately to `em-reminder` in localStorage.
+
+---
+
+## useBudgetSettings (`hooks/useBudgetSettings.ts`)
+
+Manages budget configuration.
+
+**Returns:**
+
+```typescript
+{
+  config: BudgetConfig
+  handleChange: (updated: BudgetConfig) => void
+}
+```
+
+**Side effects:** All changes persist immediately to `em-budget` in localStorage.
 
 ---
 

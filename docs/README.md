@@ -16,7 +16,7 @@ Agent-optimized reference for the codebase. Start here, then follow links for de
 ## Quick Facts
 
 - **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Ant Design v6 · Tailwind CSS v4 · Recharts · Firebase (Auth + Firestore)
-- **Persistence:** Firestore for expenses/categories/spenders; localStorage for theme + reminder
+- **Persistence:** Firestore for expenses/categories/spenders; localStorage for theme, reminder, and budget
 - **Auth:** Google Sign-In via Firebase Auth (`useAuth` hook)
 - **Currency:** INR (₹) throughout
 - **Font:** Outfit (Google) via next/font → `--font-primary` CSS var

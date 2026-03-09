@@ -52,7 +52,7 @@ public/           Static assets: service worker, PWA icons
 
 ```mermaid
 flowchart LR
-    LS[(localStorage\ntheme + reminder)] <-->|get/set| ST["lib/storage.ts"]
+    LS[(localStorage\ntheme + reminder + budget)] <-->|get/set| ST["lib/storage.ts"]
     FS[(Firestore\nexpenses/categories/spenders)] <-->|fs* fns| DC["hooks/useDataContext.ts"]
     DC -->|DataContext| HK["hooks/use*.ts"]
     HK -->|state + handlers| CM["components/*.tsx"]
@@ -61,7 +61,7 @@ flowchart LR
     CM -->|calls handlers| HK
 ```
 
-Data hooks (`useAddExpense`, `useDashboard`, `useCategoryManager`, `useSpenderManager`) read and write via `useAppData()` — they never touch localStorage or Firestore directly.
+Data hooks (`useDashboard`, `useCategoryManager`, `useSpenderManager`) read and write via `useAppData()` — they never touch localStorage or Firestore directly.
 
 ## Auth Flow
 
@@ -85,10 +85,9 @@ Every route is a minimal **server component** that imports one `"use client"` co
 
 ```
 app/page.tsx              → components/Dashboard.tsx       (uses useDashboard hook)
-app/add/page.tsx          → components/AddExpense.tsx      (uses useAddExpense hook)
 app/categories/page.tsx   → components/CategoryManager.tsx (uses useCategoryManager hook)
-app/settings/page.tsx     → components/ReminderSettings.tsx (uses useReminderSettings hook)
 app/spenders/page.tsx     → components/SpenderManager.tsx  (uses useSpenderManager hook)
+app/settings/page.tsx     → components/ReminderSettings.tsx + BudgetSettings.tsx
 app/auth/page.tsx         → components/SignInPage.tsx      (uses useAuthContext)
 ```
 
@@ -96,14 +95,13 @@ app/auth/page.tsx         → components/SignInPage.tsx      (uses useAuthContex
 
 ## Routing
 
-| Route         | Page component   | Auth required |
-| ------------- | ---------------- | ------------- |
-| `/`           | Dashboard        | Yes           |
-| `/add`        | AddExpense form  | Yes           |
-| `/categories` | CategoryManager  | Yes           |
-| `/spenders`   | SpenderManager   | Yes           |
-| `/settings`   | ReminderSettings | Yes           |
-| `/auth`       | SignInPage       | No (public)   |
+| Route         | Page component                    | Auth required |
+| ------------- | --------------------------------- | ------------- |
+| `/`           | Dashboard                         | Yes           |
+| `/categories` | CategoryManager                   | Yes           |
+| `/spenders`   | SpenderManager                    | Yes           |
+| `/settings`   | ReminderSettings + BudgetSettings | Yes           |
+| `/auth`       | SignInPage                        | No (public)   |
 
 Navigation items are defined in `constants/navigation.tsx` as `NAV_ITEMS` and consumed by `AppShell`.
 
@@ -117,6 +115,7 @@ Navigation items are defined in `constants/navigation.tsx` as `NAV_ITEMS` and co
 | Nav items + icons              | `constants/navigation.tsx`               |
 | Form validation rule factories | `constants/validation.ts`                |
 | All TS interfaces              | `lib/types.ts`                           |
+| CSV export utility             | `utils/exportUtils.ts`                   |
 | localStorage keys + read/write | `lib/storage.ts`                         |
 | Firebase lazy singletons       | `lib/firebase.ts`                        |
 | Firestore async CRUD API       | `lib/firestore.ts`                       |
