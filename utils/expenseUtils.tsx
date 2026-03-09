@@ -32,7 +32,7 @@ export function buildSpenderOptions(spenders: Spender[]) {
     label: (
       <span className="flex items-center gap-2">
         <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ background: s.avatarColor }} />
-        {s.name}
+        {s.name.split(' ')[0]}
       </span>
     ),
   }))

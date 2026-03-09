@@ -59,7 +59,7 @@ function AuthenticatedShell({
         }}
         className="sticky top-0 z-50"
       >
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between relative">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 no-underline">
             <div
@@ -79,6 +79,16 @@ function AuthenticatedShell({
               Expense Manager
             </span>
           </Link>
+
+          {/* Mobile: current page title centered */}
+          {(() => {
+            const pageLabel = NAV_ITEMS.find((item) => item.href === pathname)?.label ?? 'Dashboard'
+            return (
+              <div className="md:hidden absolute left-0 right-0 flex justify-center pointer-events-none">
+                <span style={{ color: token.colorText, fontWeight: 700, fontSize: 16 }}>{pageLabel}</span>
+              </div>
+            )
+          })()}
 
           {/* Desktop nav links */}
           <nav className="hidden md:flex items-center gap-1">

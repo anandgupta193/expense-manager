@@ -1,18 +1,30 @@
 'use client'
 
-import { Button, DatePicker, Form, Input, InputNumber, Modal, Select, Table, Typography, Empty, theme, Tag } from 'antd'
+import { useState } from 'react'
+import dayjs from 'dayjs'
 import {
-  RiseOutlined,
-  FallOutlined,
-  WalletOutlined,
-  CalendarOutlined,
-  DownloadOutlined,
-  PlusOutlined,
-} from '@ant-design/icons'
+  Button,
+  DatePicker,
+  Drawer,
+  Form,
+  Grid,
+  Input,
+  InputNumber,
+  Modal,
+  Progress,
+  Select,
+  Table,
+  Typography,
+  Empty,
+  theme,
+  Tag,
+} from 'antd'
+import { RiseOutlined, FallOutlined, CalendarOutlined, DownloadOutlined, PlusOutlined } from '@ant-design/icons'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useDashboard } from '@/hooks/useDashboard'
 import { formatINR } from '@/utils/formatters'
 import { requiredRule } from '@/constants/validation'
+import { storage } from '@/lib/storage'
 
 const { Title, Text } = Typography
 
@@ -32,7 +44,7 @@ function StatCard({
   const { token } = theme.useToken()
   return (
     <div
-      className="rounded-2xl p-5 flex items-center gap-4 card-lift fade-up relative overflow-hidden"
+      className="rounded-2xl p-3 sm:p-5 flex items-center gap-2 sm:gap-4 card-lift fade-up relative overflow-hidden"
       style={{
         background: token.colorBgContainer,
         border: `1px solid ${token.colorBorderSecondary}`,
@@ -48,7 +60,7 @@ function StatCard({
       />
 
       <div
-        className="w-11 h-11 rounded-xl flex items-center justify-center text-lg flex-shrink-0 relative z-10"
+        className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-base sm:text-lg flex-shrink-0 relative z-10"
         style={{
           background: `${color}18`,
           color,
@@ -71,8 +83,80 @@ function StatCard({
         >
           {label}
         </Text>
-        <Text strong className="block truncate" style={{ fontSize: 20, lineHeight: 1.25, color: token.colorText }}>
+        <Text
+          strong
+          className="block truncate text-base sm:text-xl"
+          style={{ lineHeight: 1.25, color: token.colorText }}
+        >
           {value}
+        </Text>
+      </div>
+    </div>
+  )
+}
+
+function BudgetStatCard({
+  remaining,
+  limit,
+  pct,
+  color,
+  animDelay = '0ms',
+}: {
+  remaining: number
+  limit: number
+  pct: number
+  color: string
+  animDelay?: string
+}) {
+  const { token } = theme.useToken()
+  const valueStr = remaining >= 0 ? formatINR(remaining) : `-${formatINR(Math.abs(remaining))}`
+  const spent = limit - remaining < 0 ? limit : limit - remaining
+  return (
+    <div
+      className="rounded-2xl p-3 sm:p-5 flex items-center gap-2 sm:gap-4 card-lift fade-up relative overflow-hidden"
+      style={{
+        background: token.colorBgContainer,
+        border: `1px solid ${token.colorBorderSecondary}`,
+        borderTop: `3px solid ${color}`,
+        boxShadow: `0 2px 16px rgba(0,0,0,0.06)`,
+        animationDelay: animDelay,
+      }}
+    >
+      <div
+        className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full pointer-events-none"
+        style={{ background: `${color}0c` }}
+      />
+
+      <div className="flex-shrink-0 relative z-10">
+        <Progress
+          type="circle"
+          percent={Math.min(pct, 100)}
+          size={40}
+          strokeColor={color}
+          strokeWidth={10}
+          format={() => null}
+        />
+      </div>
+
+      <div className="min-w-0 flex-1 relative z-10">
+        <Text
+          type="secondary"
+          className="hidden sm:block"
+          style={{
+            fontSize: 11,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            fontWeight: 600,
+            display: 'block',
+          }}
+        >
+          Budget Left
+        </Text>
+        <Text strong className="block truncate text-base sm:text-xl" style={{ lineHeight: 1.25, color }}>
+          {valueStr}
+        </Text>
+        <Text type="secondary" className="hidden sm:block" style={{ fontSize: 11 }}>
+          {formatINR(spent)} of {formatINR(limit)}
         </Text>
       </div>
     </div>
@@ -81,6 +165,9 @@ function StatCard({
 
 export default function Dashboard() {
   const { token } = theme.useToken()
+  const screens = Grid.useBreakpoint()
+  const isMobile = screens.sm === false
+  const [budget] = useState(() => storage.getBudget())
   const {
     spenders,
     selectedSpenderIds,
@@ -93,8 +180,6 @@ export default function Dashboard() {
     addForm,
     filteredExpenses,
     monthFilteredExpenses,
-    monthlyGroups,
-    total,
     monthTotal,
     topCat,
     chartData,
@@ -109,11 +194,17 @@ export default function Dashboard() {
     handleExportCSV,
   } = useDashboard()
 
+  const budgetLimit = budget.monthlyLimit
+  const budgetRemaining = budgetLimit ? budgetLimit - monthTotal : null
+  const budgetPct = budgetLimit ? (monthTotal / budgetLimit) * 100 : 0
+  const budgetColor = budgetPct < 50 ? token.colorSuccess : budgetPct <= 80 ? token.colorWarning : token.colorError
+
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="fade-up flex items-end justify-between flex-wrap gap-3">
-        <div>
+      <div className="fade-up flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        {/* Title hidden on mobile — shown in nav bar */}
+        <div className="hidden sm:block">
           <Title level={3} style={{ marginBottom: 2, fontWeight: 700, fontSize: 22 }}>
             Dashboard
           </Title>
@@ -121,7 +212,7 @@ export default function Dashboard() {
             Overview of all your expenses
           </Text>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
           {monthFilteredExpenses.length > 0 && (
             <Tag
               style={{
@@ -136,42 +227,71 @@ export default function Dashboard() {
               {monthFilteredExpenses.length} transactions
             </Tag>
           )}
-          <Button type="primary" icon={<PlusOutlined />} onClick={openAddModal}>
-            Add Expense
-          </Button>
+          {/* Desktop: spenders select */}
+          {spenders.length > 0 && (
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder="All spenders"
+              options={spenderOptions}
+              value={selectedSpenderIds}
+              onChange={setSelectedSpenderIds}
+              style={{ minWidth: 120 }}
+              className="hidden sm:block"
+            />
+          )}
+          {/* Desktop: date picker */}
+          <DatePicker
+            picker="month"
+            value={selectedMonth}
+            onChange={(v) => setSelectedMonth(v)}
+            allowClear={false}
+            format="MMM YYYY"
+            className="hidden sm:block"
+          />
+          <div className="hidden sm:flex">
+            <Button type="primary" icon={<PlusOutlined />} onClick={openAddModal} className="items-center">
+              Add Expense
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 stagger">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 stagger">
         <StatCard
-          label="Total Spent"
-          value={formatINR(total)}
-          icon={<WalletOutlined />}
-          color={token.colorPrimary}
-          animDelay="0ms"
-        />
-        <StatCard
-          label="This Month"
+          label={selectedMonth ? selectedMonth.format('MMM YYYY') : dayjs().format('MMM YYYY')}
           value={formatINR(monthTotal)}
           icon={<CalendarOutlined />}
           color={token.colorWarning}
-          animDelay="65ms"
+          animDelay="0ms"
         />
-        <StatCard
-          label="Transactions"
-          value={`${filteredExpenses.length}`}
-          icon={<RiseOutlined />}
-          color={token.colorSuccess}
-          animDelay="130ms"
-        />
-        <StatCard
-          label="Top Category"
-          value={topCat ? topCat.name : '—'}
-          icon={<FallOutlined />}
-          color={token.colorError}
-          animDelay="195ms"
-        />
+        {budgetLimit && budgetLimit > 0 ? (
+          <BudgetStatCard
+            remaining={budgetRemaining!}
+            limit={budgetLimit}
+            pct={budgetPct}
+            color={budgetColor}
+            animDelay="65ms"
+          />
+        ) : (
+          <StatCard
+            label="Transactions"
+            value={`${monthFilteredExpenses.length}`}
+            icon={<RiseOutlined />}
+            color={token.colorSuccess}
+            animDelay="65ms"
+          />
+        )}
+        <div className="hidden sm:block col-span-2 lg:col-span-1">
+          <StatCard
+            label="Top Category"
+            value={topCat ? topCat.name : '—'}
+            icon={<FallOutlined />}
+            color={token.colorError}
+            animDelay="130ms"
+          />
+        </div>
       </div>
 
       {/* Chart + breakdown */}
@@ -256,9 +376,9 @@ export default function Dashboard() {
             <Text strong style={{ fontSize: 14, fontWeight: 600 }}>
               Category Breakdown
             </Text>
-            {total > 0 && (
+            {monthTotal > 0 && (
               <Text type="secondary" style={{ fontSize: 12 }}>
-                {formatINR(total)} total
+                {formatINR(monthTotal)} total
               </Text>
             )}
           </div>
@@ -270,7 +390,7 @@ export default function Dashboard() {
                 {chartData
                   .sort((a, b) => b.value - a.value)
                   .map((item) => {
-                    const pct = total > 0 ? (item.value / total) * 100 : 0
+                    const pct = monthTotal > 0 ? (item.value / monthTotal) * 100 : 0
                     return (
                       <div key={item.name}>
                         <div className="flex justify-between items-center mb-2">
@@ -320,86 +440,6 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Monthly Overview */}
-      {monthlyGroups.length > 0 && (
-        <div className="fade-up" style={{ animationDelay: '100ms' }}>
-          <div className="flex items-center justify-between mb-3">
-            <Text strong style={{ fontSize: 14 }}>
-              Monthly Overview
-            </Text>
-            {selectedMonth && (
-              <Button size="small" type="text" onClick={() => setSelectedMonth(null)}>
-                View all months
-              </Button>
-            )}
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {monthlyGroups.map((g) => {
-              const isActive = selectedMonth?.format('YYYY-MM') === g.monthKey
-              return (
-                <div
-                  key={g.monthKey}
-                  onClick={() => setSelectedMonth(isActive ? null : g.dayjsObj)}
-                  className="flex-shrink-0 rounded-xl px-4 py-3 cursor-pointer card-lift"
-                  style={{
-                    minWidth: 130,
-                    background: isActive ? token.colorPrimary : token.colorBgContainer,
-                    border: `1px solid ${isActive ? token.colorPrimary : token.colorBorderSecondary}`,
-                    boxShadow: isActive ? `0 4px 12px ${token.colorPrimary}35` : '0 1px 6px rgba(0,0,0,0.04)',
-                    color: isActive ? '#fff' : token.colorText,
-                    transition: 'all 0.18s ease',
-                  }}
-                >
-                  <Text style={{ fontSize: 12, display: 'block', opacity: 0.75, color: 'inherit' }}>{g.label}</Text>
-                  <Text strong style={{ fontSize: 16, display: 'block', color: 'inherit' }}>
-                    {formatINR(g.total)}
-                  </Text>
-                  <Text style={{ fontSize: 11, opacity: 0.65, color: 'inherit' }}>
-                    {g.count} expense{g.count !== 1 ? 's' : ''}
-                  </Text>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Filters */}
-      <div
-        className="flex items-center gap-3 flex-wrap rounded-2xl px-5 py-4 fade-up"
-        style={{
-          background: token.colorBgContainer,
-          border: `1px solid ${token.colorBorderSecondary}`,
-          boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
-          animationDelay: '100ms',
-        }}
-      >
-        {spenders.length > 0 && (
-          <>
-            <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>
-              Filter by spender
-            </Text>
-            <Select
-              mode="multiple"
-              allowClear
-              placeholder="All spenders"
-              options={spenderOptions}
-              value={selectedSpenderIds}
-              onChange={setSelectedSpenderIds}
-              style={{ minWidth: 220 }}
-            />
-          </>
-        )}
-        <DatePicker
-          picker="month"
-          placeholder="Filter by month"
-          value={selectedMonth}
-          onChange={(val) => setSelectedMonth(val)}
-          allowClear
-          style={{ minWidth: 160 }}
-        />
       </div>
 
       {/* Expenses table */}
@@ -490,48 +530,75 @@ export default function Dashboard() {
         </Form>
       </Modal>
 
-      {/* Add Expense modal */}
-      <Modal title="Add Expense" open={addModalOpen} onCancel={closeAddModal} footer={null} destroyOnHidden>
-        <Form form={addForm} layout="vertical" onFinish={handleAddSave} className="pt-4">
-          <Form.Item label="Description" name="description" rules={[requiredRule('Enter a description')]}>
-            <Input maxLength={120} />
-          </Form.Item>
+      {/* FAB — mobile only */}
+      <button
+        onClick={openAddModal}
+        className="lg:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-40
+                   w-14 h-14 rounded-full flex items-center justify-center
+                   active:scale-95 transition-transform duration-150"
+        style={{
+          background: token.colorPrimary,
+          boxShadow: `0 4px 20px ${token.colorPrimary}55, 0 2px 8px rgba(0,0,0,0.18)`,
+        }}
+        aria-label="Add expense"
+      >
+        <PlusOutlined style={{ fontSize: 22, color: '#fff' }} />
+      </button>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item label="Amount (₹)" name="amount" rules={[requiredRule('Enter amount')]}>
-              <InputNumber className="w-full" min={0.01} precision={2} />
+      {/* Add Expense — bottom sheet on mobile, modal on desktop */}
+      {(() => {
+        const addExpenseFormJSX = (
+          <Form form={addForm} layout="vertical" onFinish={handleAddSave} className="pt-2">
+            <Form.Item label="Description" name="description" rules={[requiredRule('Enter a description')]}>
+              <Input maxLength={120} />
             </Form.Item>
-
-            <Form.Item label="Date" name="date" rules={[requiredRule('Pick a date')]}>
-              <DatePicker className="w-full" />
+            <div className="grid grid-cols-2 gap-4">
+              <Form.Item label="Amount (₹)" name="amount" rules={[requiredRule('Enter amount')]}>
+                <InputNumber className="w-full" min={0.01} precision={2} />
+              </Form.Item>
+              <Form.Item label="Date" name="date" rules={[requiredRule('Pick a date')]}>
+                <DatePicker className="w-full" />
+              </Form.Item>
+            </div>
+            <Form.Item label="Category" name="categoryId" rules={[requiredRule('Select a category')]}>
+              <Select options={categoryOptions} />
             </Form.Item>
-          </div>
-
-          <Form.Item label="Category" name="categoryId" rules={[requiredRule('Select a category')]}>
-            <Select options={categoryOptions} />
-          </Form.Item>
-
-          <Form.Item label="Spent By" name="spenderId">
-            <Select
-              options={spenderOptions}
-              allowClear
-              placeholder={spenders.length === 0 ? 'Add spenders first' : 'Select a spender'}
-              disabled={spenders.length === 0}
-            />
-          </Form.Item>
-
-          <Form.Item label="Notes" name="notes">
-            <Input.TextArea rows={2} maxLength={200} />
-          </Form.Item>
-
-          <div className="flex gap-3 justify-end">
-            <Button onClick={closeAddModal}>Cancel</Button>
-            <Button type="primary" htmlType="submit" icon={<PlusOutlined />}>
-              Add Expense
-            </Button>
-          </div>
-        </Form>
-      </Modal>
+            <Form.Item label="Spent By" name="spenderId">
+              <Select
+                options={spenderOptions}
+                allowClear
+                placeholder={spenders.length === 0 ? 'Add spenders first' : 'Select a spender'}
+                disabled={spenders.length === 0}
+              />
+            </Form.Item>
+            <Form.Item label="Notes" name="notes">
+              <Input.TextArea rows={2} maxLength={200} />
+            </Form.Item>
+            <div className="flex gap-3 justify-end">
+              <Button onClick={closeAddModal}>Cancel</Button>
+              <Button type="primary" htmlType="submit" icon={<PlusOutlined />}>
+                Add Expense
+              </Button>
+            </div>
+          </Form>
+        )
+        return isMobile ? (
+          <Drawer
+            title="Add Expense"
+            placement="bottom"
+            open={addModalOpen}
+            onClose={closeAddModal}
+            styles={{ body: { paddingBottom: 32, overflowY: 'auto' }, wrapper: { height: 'auto', maxHeight: '90dvh' } }}
+            destroyOnHidden
+          >
+            {addExpenseFormJSX}
+          </Drawer>
+        ) : (
+          <Modal title="Add Expense" open={addModalOpen} onCancel={closeAddModal} footer={null} destroyOnHidden>
+            {addExpenseFormJSX}
+          </Modal>
+        )
+      })()}
     </div>
   )
 }

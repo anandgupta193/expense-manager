@@ -41,7 +41,7 @@ export default function SpenderManager() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
-      <div className="fade-up">
+      <div className="hidden sm:block fade-up">
         <Title level={3} style={{ marginBottom: 2, fontWeight: 700, fontSize: 22 }}>
           Spenders
         </Title>

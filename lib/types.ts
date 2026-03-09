@@ -26,3 +26,7 @@ export interface ReminderConfig {
   enabled: boolean
   time: string // "HH:MM"
 }
+
+export interface BudgetConfig {
+  monthlyLimit: number | null // null = not set
+}

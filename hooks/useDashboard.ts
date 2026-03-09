@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Form, theme } from 'antd'
+import { App, Form, theme } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useAppData } from '@/app/providers'
 import type { Expense } from '@/lib/types'
-import { buildCategoryOptions, buildSpenderOptions, buildTableColumns, currentMonthTotal } from '@/utils/expenseUtils'
+import { buildCategoryOptions, buildSpenderOptions, buildTableColumns } from '@/utils/expenseUtils'
 import { exportExpensesToCSV } from '@/utils/exportUtils'
 
 interface EditFormValues {
@@ -31,13 +31,15 @@ export interface ChartData {
   name: string
   value: number
   color: string
+  fill: string
 }
 
 export function useDashboard() {
   const { token } = theme.useToken()
+  const { message } = App.useApp()
   const { expenses, categories, spenders, setExpenses } = useAppData()
   const [selectedSpenderIds, setSelectedSpenderIds] = useState<string[]>([])
-  const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(dayjs())
   const [editTarget, setEditTarget] = useState<Expense | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [form] = Form.useForm<EditFormValues>()
@@ -75,20 +77,21 @@ export function useDashboard() {
   const monthlyGroups = Object.values(monthMap).sort((a, b) => b.monthKey.localeCompare(a.monthKey))
 
   const total = filteredExpenses.reduce((s, e) => s + e.amount, 0)
-  const monthTotal = currentMonthTotal(filteredExpenses)
+  const monthTotal = monthFilteredExpenses.reduce((s, e) => s + e.amount, 0)
   const topCat =
     categories
       .map((c) => ({
         name: c.name,
-        total: filteredExpenses.filter((e) => e.categoryId === c.id).reduce((s, e) => s + e.amount, 0),
+        total: monthFilteredExpenses.filter((e) => e.categoryId === c.id).reduce((s, e) => s + e.amount, 0),
       }))
       .sort((a, b) => b.total - a.total)[0] ?? null
 
   const chartData: ChartData[] = categories
     .map((c) => ({
       name: c.name,
-      value: filteredExpenses.filter((e) => e.categoryId === c.id).reduce((s, e) => s + e.amount, 0),
+      value: monthFilteredExpenses.filter((e) => e.categoryId === c.id).reduce((s, e) => s + e.amount, 0),
       color: c.color,
+      fill: c.color,
     }))
     .filter((d) => d.value > 0)
 
@@ -137,6 +140,7 @@ export function useDashboard() {
     }
     setExpenses([newExpense, ...expenses])
     closeAddModal()
+    message.success('Expense added!')
   }
 
   function handleDelete(id: string) {

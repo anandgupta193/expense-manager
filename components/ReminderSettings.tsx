@@ -49,7 +49,7 @@ export default function ReminderSettings() {
         </div>
 
         <div
-          className="flex items-center justify-between rounded-xl px-4 py-3"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-xl px-4 py-3 gap-3 sm:gap-0"
           style={{
             background: token.colorFillAlter,
             border: `1px solid ${token.colorBorderSecondary}`,
@@ -67,6 +67,7 @@ export default function ReminderSettings() {
             disabled={!config.enabled}
             onChange={handleTimeChange}
             allowClear={false}
+            className="w-full sm:w-auto"
           />
         </div>
 
