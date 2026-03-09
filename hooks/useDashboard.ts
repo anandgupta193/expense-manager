@@ -7,8 +7,18 @@ import dayjs from 'dayjs'
 import { useAppData } from '@/app/providers'
 import type { Expense } from '@/lib/types'
 import { buildCategoryOptions, buildSpenderOptions, buildTableColumns, currentMonthTotal } from '@/utils/expenseUtils'
+import { exportExpensesToCSV } from '@/utils/exportUtils'
 
 interface EditFormValues {
+  description: string
+  amount: number
+  categoryId: string
+  date: Dayjs
+  notes?: string
+  spenderId?: string
+}
+
+interface AddFormValues {
   description: string
   amount: number
   categoryId: string
@@ -27,9 +37,12 @@ export function useDashboard() {
   const { token } = theme.useToken()
   const { expenses, categories, spenders, setExpenses } = useAppData()
   const [selectedSpenderIds, setSelectedSpenderIds] = useState<string[]>([])
+  const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(null)
   const [editTarget, setEditTarget] = useState<Expense | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [form] = Form.useForm<EditFormValues>()
+  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [addForm] = Form.useForm<AddFormValues>()
 
   const catMap = Object.fromEntries(categories.map((c) => [c.id, c]))
   const spenderMap = Object.fromEntries(spenders.map((s) => [s.id, s]))
@@ -38,6 +51,28 @@ export function useDashboard() {
     selectedSpenderIds.length === 0
       ? expenses
       : expenses.filter((e) => e.spenderId && selectedSpenderIds.includes(e.spenderId))
+
+  const monthFilteredExpenses =
+    selectedMonth === null
+      ? filteredExpenses
+      : filteredExpenses.filter((e) => {
+          const d = dayjs(e.date)
+          return d.month() === selectedMonth.month() && d.year() === selectedMonth.year()
+        })
+
+  // Build map keyed by 'YYYY-MM'
+  const monthMap: Record<string, { label: string; monthKey: string; dayjsObj: Dayjs; total: number; count: number }> =
+    {}
+  filteredExpenses.forEach((e) => {
+    const d = dayjs(e.date)
+    const key = d.format('YYYY-MM')
+    if (!monthMap[key]) {
+      monthMap[key] = { label: d.format('MMM YYYY'), monthKey: key, dayjsObj: d.startOf('month'), total: 0, count: 0 }
+    }
+    monthMap[key].total += e.amount
+    monthMap[key].count += 1
+  })
+  const monthlyGroups = Object.values(monthMap).sort((a, b) => b.monthKey.localeCompare(a.monthKey))
 
   const total = filteredExpenses.reduce((s, e) => s + e.amount, 0)
   const monthTotal = currentMonthTotal(filteredExpenses)
@@ -57,6 +92,11 @@ export function useDashboard() {
     }))
     .filter((d) => d.value > 0)
 
+  function handleExportCSV() {
+    const filename = selectedMonth ? `expenses-${selectedMonth.format('YYYY-MM')}.csv` : 'expenses-all.csv'
+    exportExpensesToCSV(monthFilteredExpenses, catMap, spenderMap, filename)
+  }
+
   function openEdit(expense: Expense) {
     setEditTarget(expense)
     form.setFieldsValue({
@@ -73,6 +113,30 @@ export function useDashboard() {
   function closeEdit() {
     setModalOpen(false)
     setEditTarget(null)
+  }
+
+  function openAddModal() {
+    addForm.resetFields()
+    addForm.setFieldsValue({ date: dayjs(), categoryId: 'cat-other' })
+    setAddModalOpen(true)
+  }
+
+  function closeAddModal() {
+    setAddModalOpen(false)
+  }
+
+  function handleAddSave(values: AddFormValues) {
+    const newExpense: Expense = {
+      id: crypto.randomUUID(),
+      date: values.date.format('YYYY-MM-DD'),
+      description: values.description.trim(),
+      amount: values.amount,
+      categoryId: values.categoryId,
+      spenderId: values.spenderId || undefined,
+      notes: values.notes?.trim() || undefined,
+    }
+    setExpenses([newExpense, ...expenses])
+    closeAddModal()
   }
 
   function handleDelete(id: string) {
@@ -107,9 +171,15 @@ export function useDashboard() {
     spenders,
     selectedSpenderIds,
     setSelectedSpenderIds,
+    selectedMonth,
+    setSelectedMonth,
     modalOpen,
     form,
+    addModalOpen,
+    addForm,
     filteredExpenses,
+    monthFilteredExpenses,
+    monthlyGroups,
     total,
     monthTotal,
     topCat,
@@ -120,5 +190,9 @@ export function useDashboard() {
     openEdit,
     closeEdit,
     handleEditSave,
+    openAddModal,
+    closeAddModal,
+    handleAddSave,
+    handleExportCSV,
   }
 }

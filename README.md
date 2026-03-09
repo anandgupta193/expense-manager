@@ -2,13 +2,14 @@
 
 # 💸 Expense Manager
 
-**A beautiful, offline-first personal finance tracker — no account, no cloud, no nonsense.**
+**A beautiful personal finance tracker with Google Sign-In and real-time cloud sync.**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Ant Design](https://img.shields.io/badge/Ant%20Design-6-0170FE?style=for-the-badge&logo=antdesign&logoColor=white)](https://ant.design)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
 [![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 
 [![License](https://img.shields.io/github/license/anandgupta193/expense-manager?style=flat-square&color=green)](LICENSE)
@@ -22,18 +23,18 @@
 
 ## ✨ Features
 
-| Feature               | Details                                                              |
-| --------------------- | -------------------------------------------------------------------- |
-| 📊 **Dashboard**      | Total spend, monthly spend, top category, expense count at a glance  |
-| 📈 **Charts**         | Donut chart + category breakdown bar with spend percentages          |
-| ➕ **Add Expenses**   | Description, amount (₹), category, date, optional notes & spender    |
-| ✏️ **Edit & Delete**  | Inline edit modal and one-click delete with confirmation             |
-| 🏷️ **Categories**     | Create, color-code, edit and delete custom categories                |
-| 👥 **Spenders**       | Track who spent what — filter the dashboard by spender               |
-| 🔔 **Daily Reminder** | Browser notification reminder at a configurable time                 |
-| 🌙 **Dark Mode**      | Full dark/light theme toggle, persisted across sessions              |
-| 📱 **PWA**            | Installable on mobile/desktop, works fully offline                   |
-| 🔒 **100% Private**   | All data stays in your browser's localStorage — no server, no signup |
+| Feature               | Details                                                             |
+| --------------------- | ------------------------------------------------------------------- |
+| 📊 **Dashboard**      | Total spend, monthly spend, top category, expense count at a glance |
+| 📈 **Charts**         | Donut chart + category breakdown bar with spend percentages         |
+| ➕ **Add Expenses**   | Description, amount (₹), category, date, optional notes & spender   |
+| ✏️ **Edit & Delete**  | Inline edit modal and one-click delete with confirmation            |
+| 🏷️ **Categories**     | Create, color-code, edit and delete custom categories               |
+| 👥 **Spenders**       | Track who spent what — filter the dashboard by spender              |
+| 🔔 **Daily Reminder** | Browser notification reminder at a configurable time                |
+| 🌙 **Dark Mode**      | Full dark/light theme toggle, persisted across sessions             |
+| 📱 **PWA**            | Installable on mobile/desktop, works fully offline                  |
+| ☁️ **Cloud Sync**     | Data synced to Firestore — access from any device after sign-in     |
 
 ---
 
@@ -64,34 +65,58 @@
 
 ## 🚀 Quick Start
 
+### 1. Clone and install
+
 ```bash
-# Clone the repo
 git clone https://github.com/anandgupta193/expense-manager.git
 cd expense-manager
-
-# Install dependencies
 npm install
+```
 
-# Start the dev server
+### 2. Configure Firebase
+
+Copy the example env file and fill in your Firebase project values:
+
+```bash
+cp .env.local.example .env.local
+```
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+```
+
+> See [Firebase Console](https://console.firebase.google.com) → Project Settings → Your apps → Web app config.
+> Enable **Authentication → Google** provider and **Firestore Database** in your Firebase project.
+
+### 3. Run
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — no environment variables or database setup required.
+Open [http://localhost:3000](http://localhost:3000) and sign in with Google.
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer      | Technology                                    |
-| ---------- | --------------------------------------------- |
-| Framework  | [Next.js 16](https://nextjs.org) (App Router) |
-| UI Library | [Ant Design 6](https://ant.design)            |
-| Styling    | [Tailwind CSS 4](https://tailwindcss.com)     |
-| Charts     | [Recharts 3](https://recharts.org)            |
-| Language   | TypeScript 5                                  |
-| Storage    | Browser `localStorage` — zero backend         |
-| PWA        | Custom service worker + Web Manifest          |
-| Linting    | ESLint + Prettier + Husky pre-commit          |
+| Layer      | Technology                                       |
+| ---------- | ------------------------------------------------ |
+| Framework  | [Next.js 16](https://nextjs.org) (App Router)    |
+| UI Library | [Ant Design 6](https://ant.design)               |
+| Styling    | [Tailwind CSS 4](https://tailwindcss.com)        |
+| Charts     | [Recharts 3](https://recharts.org)               |
+| Language   | TypeScript 5                                     |
+| Auth       | Firebase Authentication (Google Sign-In)         |
+| Database   | Cloud Firestore — expenses, categories, spenders |
+| Local      | `localStorage` — theme + reminder config only    |
+| PWA        | Custom service worker + Web Manifest             |
+| Linting    | ESLint + Prettier + Husky pre-commit             |
 
 ---
 
@@ -106,18 +131,22 @@ expense-manager/
 │   ├── categories/page.tsx # /categories → Category Manager
 │   ├── spenders/page.tsx   # /spenders → Spender Manager
 │   ├── settings/page.tsx   # /settings → Reminder Settings
-│   ├── providers.tsx       # Theme context + antd ConfigProvider
+│   ├── auth/page.tsx       # /auth → Sign In
+│   ├── providers.tsx       # Auth + Theme + Data contexts, antd ConfigProvider
 │   └── manifest.ts         # PWA web manifest
 │
 ├── components/             # JSX-only UI components (no business logic)
-│   ├── AppShell.tsx        # Nav bar, bottom tab bar, layout wrapper
+│   ├── AppShell.tsx        # Nav bar, bottom tab bar, auth UI (avatar/sign-out)
 │   ├── Dashboard.tsx       # Stats, charts, expense table
 │   ├── AddExpense.tsx      # Add expense form
 │   ├── CategoryManager.tsx # CRUD for categories
 │   ├── SpenderManager.tsx  # CRUD for spenders
+│   ├── SignInPage.tsx      # Google sign-in screen
 │   └── ReminderSettings.tsx# Notification toggle & time picker
 │
 ├── hooks/                  # Custom React hooks (all state & logic)
+│   ├── useAuth.ts          # Firebase onAuthStateChanged wrapper
+│   ├── useDataContext.ts   # Loads + syncs Firestore data for authed user
 │   ├── useDashboard.ts
 │   ├── useAddExpense.ts
 │   ├── useCategoryManager.ts
@@ -139,10 +168,13 @@ expense-manager/
 │
 ├── lib/                    # Core data layer
 │   ├── types.ts            # TypeScript interfaces
-│   ├── storage.ts          # localStorage read/write wrappers
+│   ├── storage.ts          # localStorage wrappers (theme + reminder only)
+│   ├── firebase.ts         # Lazy Firebase singletons (SSR-safe)
+│   ├── firestore.ts        # Async Firestore CRUD API (fs* functions)
 │   ├── defaultData.ts      # Exports DEFAULT_CATEGORIES
 │   └── useReminder.ts      # Background notification hook
 │
+├── firestore.rules         # Firestore security rules
 └── public/
     ├── sw.js               # Service worker (network-first, offline fallback)
     └── icons/              # PWA icons (192px, 512px SVG)
@@ -152,15 +184,22 @@ expense-manager/
 
 ## 💾 Data Model
 
-All data lives in `localStorage`. No accounts, no sync, no servers.
+Expenses, categories, and spenders live in **Firestore** under `users/{uid}/`. Theme and reminder config stay in `localStorage` only.
 
-| Key             | Type                | Description                                      |
-| --------------- | ------------------- | ------------------------------------------------ |
-| `em-expenses`   | `Expense[]`         | All recorded expenses                            |
-| `em-categories` | `Category[]`        | User-defined categories (seeded with 7 defaults) |
-| `em-spenders`   | `Spender[]`         | People who spent money                           |
-| `em-theme`      | `"light" \| "dark"` | Active theme                                     |
-| `em-reminder`   | `ReminderConfig`    | Notification enabled state + time                |
+### Firestore Collections
+
+| Collection   | Doc ID        | Type       | Notes                                               |
+| ------------ | ------------- | ---------- | --------------------------------------------------- |
+| `expenses`   | `expense.id`  | `Expense`  | All recorded expenses                               |
+| `categories` | `category.id` | `Category` | Seeded with 7 defaults on first sign-in             |
+| `spenders`   | `spender.id`  | `Spender`  | Seeded with the user's own spender on first sign-in |
+
+### localStorage
+
+| Key           | Type                | Description         |
+| ------------- | ------------------- | ------------------- |
+| `em-theme`    | `"light" \| "dark"` | Active theme        |
+| `em-reminder` | `ReminderConfig`    | Notification config |
 
 **Core types:**
 
@@ -168,7 +207,7 @@ All data lives in `localStorage`. No accounts, no sync, no servers.
 interface Expense {
   id: string
   description: string
-  amount: number
+  amount: number // INR
   categoryId: string
   date: string // "YYYY-MM-DD"
   notes?: string
@@ -182,7 +221,7 @@ interface Category {
 }
 
 interface Spender {
-  id: string
+  id: string // user.uid for the seeded self-spender
   name: string
   avatarColor: string // hex
 }
@@ -211,13 +250,13 @@ The app is fully installable as a Progressive Web App:
 - **iOS Safari:** Share → Add to Home Screen
 - **Android Chrome:** Menu → Add to Home Screen
 
-Once installed, the app works completely offline using a cached service worker.
+Once installed, the app works offline using a cached service worker. Data syncs to Firestore when connectivity is restored.
 
 ---
 
 ## 🎨 Default Categories
 
-Seven categories are seeded on first launch — all editable:
+Seven categories are seeded on first sign-in — all editable:
 
 | Category         | Color     |
 | ---------------- | --------- |
@@ -247,5 +286,5 @@ Seven categories are seeded on first launch — all editable:
 ---
 
 <div align="center">
-  <sub>Built with ❤️ using Next.js · Ant Design · Tailwind CSS</sub>
+  <sub>Built with ❤️ using Next.js · Ant Design · Tailwind CSS · Firebase</sub>
 </div>

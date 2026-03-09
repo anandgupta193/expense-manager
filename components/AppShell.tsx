@@ -55,6 +55,7 @@ function AuthenticatedShell({
         style={{
           background: token.colorBgContainer,
           borderBottom: `1px solid ${token.colorBorderSecondary}`,
+          boxShadow: '0 1px 12px rgba(0,0,0,0.05)',
         }}
         className="sticky top-0 z-50"
       >
@@ -63,28 +64,44 @@ function AuthenticatedShell({
           <Link href="/" className="flex items-center gap-3 no-underline">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-base"
-              style={{ background: token.colorPrimary }}
+              style={{
+                background: `linear-gradient(135deg, ${token.colorPrimary} 0%, #818cf8 100%)`,
+                boxShadow: `0 3px 10px ${token.colorPrimary}45`,
+                letterSpacing: '-0.5px',
+              }}
             >
               ₹
             </div>
-            <span style={{ color: token.colorText }} className="font-bold text-base hidden sm:block">
+            <span
+              style={{ color: token.colorText, fontWeight: 700, letterSpacing: '-0.01em' }}
+              className="text-base hidden sm:block"
+            >
               Expense Manager
             </span>
           </Link>
 
           {/* Desktop nav links */}
           <nav className="hidden md:flex items-center gap-1">
-            {NAV_ITEMS.map((item) => (
-              <Link key={item.href} href={item.href}>
-                <Button
-                  type={pathname === item.href ? 'primary' : 'text'}
-                  icon={item.icon}
-                  className="flex items-center"
-                >
-                  {item.label}
-                </Button>
-              </Link>
-            ))}
+            {NAV_ITEMS.map((item) => {
+              const active = pathname === item.href
+              return (
+                <Link key={item.href} href={item.href}>
+                  <Button
+                    type="text"
+                    icon={item.icon}
+                    className="flex items-center"
+                    style={{
+                      color: active ? token.colorPrimary : token.colorTextSecondary,
+                      background: active ? `${token.colorPrimary}12` : 'transparent',
+                      fontWeight: active ? 600 : 400,
+                      borderRadius: 8,
+                    }}
+                  >
+                    {item.label}
+                  </Button>
+                </Link>
+              )
+            })}
           </nav>
 
           {/* Right side: theme toggle + auth */}
@@ -95,14 +112,19 @@ function AuthenticatedShell({
               icon={appTheme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
               onClick={toggleTheme}
               title={appTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              style={{ color: token.colorTextSecondary }}
             />
 
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
               <Avatar
                 src={user.photoURL}
                 icon={!user.photoURL ? <UserOutlined /> : undefined}
-                style={{ cursor: 'pointer', border: `2px solid ${token.colorPrimary}` }}
-                size={36}
+                style={{
+                  cursor: 'pointer',
+                  border: `2px solid ${token.colorPrimary}`,
+                  boxShadow: `0 0 0 2px ${token.colorPrimary}20`,
+                }}
+                size={34}
               />
             </Dropdown>
           </div>
@@ -117,6 +139,7 @@ function AuthenticatedShell({
         style={{
           background: token.colorBgContainer,
           borderTop: `1px solid ${token.colorBorderSecondary}`,
+          boxShadow: '0 -2px 16px rgba(0,0,0,0.06)',
         }}
         className="md:hidden fixed bottom-0 left-0 right-0 flex z-50"
       >
@@ -125,13 +148,38 @@ function AuthenticatedShell({
           return (
             <Link key={item.href} href={item.href} className="flex-1">
               <div
-                className="flex flex-col items-center py-3 gap-1"
+                className="flex flex-col items-center py-2.5 gap-1 relative"
                 style={{
                   color: active ? token.colorPrimary : token.colorTextSecondary,
                 }}
               >
-                <span className="text-xl">{item.icon}</span>
-                <span className="text-xs font-medium">{item.label}</span>
+                {/* Active indicator bar */}
+                {active && (
+                  <span
+                    className="absolute top-0 rounded-b-full"
+                    style={{
+                      background: token.colorPrimary,
+                      width: 24,
+                      height: 2.5,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      boxShadow: `0 2px 8px ${token.colorPrimary}60`,
+                    }}
+                  />
+                )}
+                <span
+                  className="text-xl"
+                  style={{
+                    transform: active ? 'scale(1.1)' : 'scale(1)',
+                    transition: 'transform 0.15s ease',
+                    display: 'block',
+                  }}
+                >
+                  {item.icon}
+                </span>
+                <span className="text-xs" style={{ fontWeight: active ? 600 : 400 }}>
+                  {item.label}
+                </span>
               </div>
             </Link>
           )
