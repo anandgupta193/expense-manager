@@ -248,6 +248,7 @@ export default function Dashboard() {
             allowClear={false}
             format="MMM YYYY"
             className="hidden sm:block"
+            inputReadOnly
           />
           <div className="hidden sm:flex">
             <Button type="primary" icon={<PlusOutlined />} onClick={openAddModal} className="items-center">
@@ -487,48 +488,70 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Edit modal */}
-      <Modal title="Edit Expense" open={modalOpen} onCancel={closeEdit} footer={null} destroyOnHidden>
-        <Form form={form} layout="vertical" onFinish={handleEditSave} className="pt-4">
-          <Form.Item label="Description" name="description" rules={[requiredRule('Enter a description')]}>
-            <Input maxLength={120} />
-          </Form.Item>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item label="Amount (₹)" name="amount" rules={[requiredRule('Enter amount')]}>
-              <InputNumber className="w-full" min={0.01} precision={2} />
+      {/* Edit expense — bottom sheet on mobile, modal on desktop */}
+      {(() => {
+        const editExpenseFormJSX = (
+          <Form form={form} layout="vertical" onFinish={handleEditSave} className="pt-4">
+            <Form.Item label="Description" name="description" rules={[requiredRule('Enter a description')]}>
+              <Input maxLength={120} />
             </Form.Item>
 
-            <Form.Item label="Date" name="date" rules={[requiredRule('Pick a date')]}>
-              <DatePicker className="w-full" />
+            <div className="grid grid-cols-2 gap-4">
+              <Form.Item label="Amount (₹)" name="amount" rules={[requiredRule('Enter amount')]}>
+                <InputNumber className="w-full" min={0.01} precision={2} />
+              </Form.Item>
+
+              <Form.Item label="Date" name="date" rules={[requiredRule('Pick a date')]}>
+                <DatePicker
+                  className="w-full"
+                  inputReadOnly
+                  getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
+                />
+              </Form.Item>
+            </div>
+
+            <Form.Item label="Category" name="categoryId" rules={[requiredRule('Select a category')]}>
+              <Select options={categoryOptions} />
             </Form.Item>
-          </div>
 
-          <Form.Item label="Category" name="categoryId" rules={[requiredRule('Select a category')]}>
-            <Select options={categoryOptions} />
-          </Form.Item>
+            <Form.Item label="Spent By" name="spenderId">
+              <Select
+                options={spenderOptions}
+                allowClear
+                placeholder={spenders.length === 0 ? 'Add spenders first' : 'Select a spender'}
+                disabled={spenders.length === 0}
+              />
+            </Form.Item>
 
-          <Form.Item label="Spent By" name="spenderId">
-            <Select
-              options={spenderOptions}
-              allowClear
-              placeholder={spenders.length === 0 ? 'Add spenders first' : 'Select a spender'}
-              disabled={spenders.length === 0}
-            />
-          </Form.Item>
+            <Form.Item label="Notes" name="notes">
+              <Input.TextArea rows={2} maxLength={200} />
+            </Form.Item>
 
-          <Form.Item label="Notes" name="notes">
-            <Input.TextArea rows={2} maxLength={200} />
-          </Form.Item>
-
-          <div className="flex gap-3 justify-end">
-            <Button onClick={closeEdit}>Cancel</Button>
-            <Button type="primary" htmlType="submit">
-              Save Changes
-            </Button>
-          </div>
-        </Form>
-      </Modal>
+            <div className="flex gap-3 justify-end">
+              <Button onClick={closeEdit}>Cancel</Button>
+              <Button type="primary" htmlType="submit">
+                Save Changes
+              </Button>
+            </div>
+          </Form>
+        )
+        return isMobile ? (
+          <Drawer
+            title="Edit Expense"
+            placement="bottom"
+            open={modalOpen}
+            onClose={closeEdit}
+            styles={{ body: { paddingBottom: 32, overflowY: 'auto' }, wrapper: { height: 'auto', maxHeight: '90dvh' } }}
+            destroyOnHidden
+          >
+            {editExpenseFormJSX}
+          </Drawer>
+        ) : (
+          <Modal title="Edit Expense" open={modalOpen} onCancel={closeEdit} footer={null} destroyOnHidden>
+            {editExpenseFormJSX}
+          </Modal>
+        )
+      })()}
 
       {/* FAB — mobile only */}
       <button
@@ -557,7 +580,11 @@ export default function Dashboard() {
                 <InputNumber className="w-full" min={0.01} precision={2} />
               </Form.Item>
               <Form.Item label="Date" name="date" rules={[requiredRule('Pick a date')]}>
-                <DatePicker className="w-full" />
+                <DatePicker
+                  className="w-full"
+                  inputReadOnly
+                  getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
+                />
               </Form.Item>
             </div>
             <Form.Item label="Category" name="categoryId" rules={[requiredRule('Select a category')]}>
