@@ -94,6 +94,8 @@ export function useDashboard() {
       fill: c.color,
     }))
     .filter((d) => d.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5)
 
   function handleExportCSV() {
     const filename = selectedMonth ? `expenses-${selectedMonth.format('YYYY-MM')}.csv` : 'expenses-all.csv'
