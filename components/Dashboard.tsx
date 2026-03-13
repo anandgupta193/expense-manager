@@ -182,6 +182,7 @@ export default function Dashboard() {
     monthFilteredExpenses,
     monthTotal,
     topCat,
+    allCategoryData,
     chartData,
     columns,
     categoryOptions,
@@ -384,11 +385,11 @@ export default function Dashboard() {
             )}
           </div>
           <div className="p-5">
-            {chartData.length === 0 ? (
+            {allCategoryData.length === 0 ? (
               <Empty description="No expenses yet" className="py-10" />
             ) : (
               <div className="space-y-4">
-                {chartData
+                {allCategoryData
                   .sort((a, b) => b.value - a.value)
                   .map((item) => {
                     const pct = monthTotal > 0 ? (item.value / monthTotal) * 100 : 0
@@ -511,7 +512,10 @@ export default function Dashboard() {
             </div>
 
             <Form.Item label="Category" name="categoryId" rules={[requiredRule('Select a category')]}>
-              <Select options={categoryOptions} />
+              <Select
+                options={categoryOptions}
+                getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
+              />
             </Form.Item>
 
             <Form.Item label="Spent By" name="spenderId">
@@ -520,6 +524,7 @@ export default function Dashboard() {
                 allowClear
                 placeholder={spenders.length === 0 ? 'Add spenders first' : 'Select a spender'}
                 disabled={spenders.length === 0}
+                getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
               />
             </Form.Item>
 
@@ -588,7 +593,10 @@ export default function Dashboard() {
               </Form.Item>
             </div>
             <Form.Item label="Category" name="categoryId" rules={[requiredRule('Select a category')]}>
-              <Select options={categoryOptions} />
+              <Select
+                options={categoryOptions}
+                getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
+              />
             </Form.Item>
             <Form.Item label="Spent By" name="spenderId">
               <Select
@@ -596,6 +604,7 @@ export default function Dashboard() {
                 allowClear
                 placeholder={spenders.length === 0 ? 'Add spenders first' : 'Select a spender'}
                 disabled={spenders.length === 0}
+                getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
               />
             </Form.Item>
             <Form.Item label="Notes" name="notes">

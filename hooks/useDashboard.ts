@@ -86,7 +86,7 @@ export function useDashboard() {
       }))
       .sort((a, b) => b.total - a.total)[0] ?? null
 
-  const chartData: ChartData[] = categories
+  const allCategoryData: ChartData[] = categories
     .map((c) => ({
       name: c.name,
       value: monthFilteredExpenses.filter((e) => e.categoryId === c.id).reduce((s, e) => s + e.amount, 0),
@@ -95,7 +95,8 @@ export function useDashboard() {
     }))
     .filter((d) => d.value > 0)
     .sort((a, b) => b.value - a.value)
-    .slice(0, 5)
+
+  const chartData: ChartData[] = allCategoryData.slice(0, 5)
 
   function handleExportCSV() {
     const filename = selectedMonth ? `expenses-${selectedMonth.format('YYYY-MM')}.csv` : 'expenses-all.csv'
@@ -189,6 +190,7 @@ export function useDashboard() {
     total,
     monthTotal,
     topCat,
+    allCategoryData,
     chartData,
     columns,
     categoryOptions,

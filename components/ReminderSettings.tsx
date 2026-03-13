@@ -67,6 +67,7 @@ export default function ReminderSettings() {
             disabled={!config.enabled}
             onChange={handleTimeChange}
             allowClear={false}
+            inputReadOnly
             className="w-full sm:w-auto"
           />
         </div>

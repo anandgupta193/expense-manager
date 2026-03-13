@@ -105,3 +105,27 @@ body {
 .progress-fill {
   transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ─── Mobile touch device UX fixes ──────────────────────────────────── */
+@media (hover: none) and (pointer: coarse) {
+  /* Prevent iOS Safari from zooming on input focus (requires font-size >= 16px) */
+  input,
+  textarea,
+  .ant-input,
+  .ant-input-number-input,
+  .ant-picker-input input,
+  .ant-select-selector input {
+    font-size: 16px !important;
+  }
+
+  /* Prevent Select's hidden search input from pulling up the software keyboard */
+  .ant-select-selector input {
+    pointer-events: none;
+  }
+
+  /* Contain scroll within dropdown — prevents page-scroll bleed-through */
+  .ant-select-dropdown,
+  .ant-picker-dropdown {
+    overscroll-behavior: contain;
+  }
+}
