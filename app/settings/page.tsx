@@ -1,5 +1,6 @@
 import ReminderSettings from '@/components/ReminderSettings'
 import BudgetSettings from '@/components/BudgetSettings'
+import SpenderManager from '@/components/SpenderManager'
 
 export default function SettingsPage() {
   return (
@@ -8,6 +9,7 @@ export default function SettingsPage() {
       <div className="space-y-4">
         <BudgetSettings />
         <ReminderSettings />
+        <SpenderManager />
       </div>
     </div>
   )

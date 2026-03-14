@@ -2,28 +2,11 @@
 
 import { useState } from 'react'
 import dayjs from 'dayjs'
-import {
-  Button,
-  DatePicker,
-  Drawer,
-  Form,
-  Grid,
-  Input,
-  InputNumber,
-  Modal,
-  Progress,
-  Select,
-  Table,
-  Typography,
-  Empty,
-  theme,
-  Tag,
-} from 'antd'
-import { RiseOutlined, FallOutlined, CalendarOutlined, DownloadOutlined, PlusOutlined } from '@ant-design/icons'
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { DatePicker, Empty, Progress, Select, Typography, theme, Tag } from 'antd'
+import { RiseOutlined, FallOutlined, CalendarOutlined } from '@ant-design/icons'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { useDashboard } from '@/hooks/useDashboard'
 import { formatINR } from '@/utils/formatters'
-import { requiredRule } from '@/constants/validation'
 import { storage } from '@/lib/storage'
 
 const { Title, Text } = Typography
@@ -165,8 +148,6 @@ function BudgetStatCard({
 
 export default function Dashboard() {
   const { token } = theme.useToken()
-  const screens = Grid.useBreakpoint()
-  const isMobile = screens.sm === false
   const [budget] = useState(() => storage.getBudget())
   const {
     spenders,
@@ -174,25 +155,12 @@ export default function Dashboard() {
     setSelectedSpenderIds,
     selectedMonth,
     setSelectedMonth,
-    modalOpen,
-    form,
-    addModalOpen,
-    addForm,
-    filteredExpenses,
     monthFilteredExpenses,
     monthTotal,
     topCat,
     allCategoryData,
     chartData,
-    columns,
-    categoryOptions,
     spenderOptions,
-    closeEdit,
-    handleEditSave,
-    openAddModal,
-    closeAddModal,
-    handleAddSave,
-    handleExportCSV,
   } = useDashboard()
 
   const budgetLimit = budget.monthlyLimit
@@ -216,6 +184,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-2 flex-wrap">
           {monthFilteredExpenses.length > 0 && (
             <Tag
+              className="hidden sm:inline-flex"
               style={{
                 borderRadius: 20,
                 fontSize: 12,
@@ -238,7 +207,6 @@ export default function Dashboard() {
               value={selectedSpenderIds}
               onChange={setSelectedSpenderIds}
               style={{ minWidth: 120 }}
-              className="hidden sm:block"
             />
           )}
           {/* Desktop: date picker */}
@@ -248,14 +216,8 @@ export default function Dashboard() {
             onChange={(v) => setSelectedMonth(v)}
             allowClear={false}
             format="MMM YYYY"
-            className="hidden sm:block"
             inputReadOnly
           />
-          <div className="hidden sm:flex">
-            <Button type="primary" icon={<PlusOutlined />} onClick={openAddModal} className="items-center">
-              Add Expense
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -317,46 +279,55 @@ export default function Dashboard() {
             </Text>
             {chartData.length > 0 && (
               <Text type="secondary" style={{ fontSize: 12 }}>
-                {chartData.length} categories
+                Top {chartData.length} categories
               </Text>
             )}
           </div>
-          <div className="p-4">
+          <div className="p-4 flex flex-col gap-4">
             {chartData.length === 0 ? (
               <Empty description="No expenses yet" className="py-10" />
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={72}
-                    outerRadius={112}
-                    paddingAngle={2}
-                    dataKey="value"
-                    strokeWidth={0}
-                  >
-                    {chartData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) => [formatINR(Number(value)), 'Amount']}
-                    contentStyle={{
-                      background: token.colorBgElevated,
-                      border: `1px solid ${token.colorBorderSecondary}`,
-                      borderRadius: 10,
-                      color: token.colorText,
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                      fontSize: 13,
-                    }}
-                  />
-                  <Legend
-                    formatter={(value) => <span style={{ color: token.colorText, fontSize: 12 }}>{value}</span>}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={72}
+                      outerRadius={112}
+                      paddingAngle={2}
+                      dataKey="value"
+                      strokeWidth={0}
+                    >
+                      {chartData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value) => [formatINR(Number(value)), 'Amount']}
+                      contentStyle={{
+                        background: token.colorBgElevated,
+                        border: `1px solid ${token.colorBorderSecondary}`,
+                        borderRadius: 10,
+                        color: token.colorText,
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                        fontSize: 13,
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 pb-2">
+                  {chartData.map((entry) => (
+                    <div key={entry.name} className="flex items-center gap-1.5">
+                      <span
+                        style={{ width: 10, height: 10, borderRadius: 2, background: entry.color, flexShrink: 0 }}
+                      />
+                      <span style={{ fontSize: 12, color: token.colorText }}>{entry.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -443,198 +414,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-
-      {/* Expenses table */}
-      <div
-        className="rounded-2xl overflow-hidden fade-up"
-        style={{
-          background: token.colorBgContainer,
-          border: `1px solid ${token.colorBorderSecondary}`,
-          boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
-          animationDelay: '120ms',
-        }}
-      >
-        <div
-          className="px-5 py-4 flex items-center justify-between"
-          style={{ borderBottom: `1px solid ${token.colorBorderSecondary}` }}
-        >
-          <Text strong style={{ fontSize: 14, fontWeight: 600 }}>
-            {selectedMonth ? `${selectedMonth.format('MMMM YYYY')} Expenses` : 'All Expenses'}
-          </Text>
-          <div className="flex items-center gap-3">
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {monthFilteredExpenses.length} records
-            </Text>
-            <Button
-              icon={<DownloadOutlined />}
-              size="small"
-              onClick={handleExportCSV}
-              disabled={monthFilteredExpenses.length === 0}
-              style={{ borderRadius: 8 }}
-            >
-              Export CSV
-            </Button>
-          </div>
-        </div>
-        <div className="p-4">
-          <Table
-            dataSource={monthFilteredExpenses}
-            columns={columns}
-            rowKey="id"
-            pagination={{ pageSize: 10, hideOnSinglePage: true, showSizeChanger: false }}
-            scroll={{ x: 'max-content' }}
-            locale={{ emptyText: <Empty description="No expenses yet" /> }}
-            size="small"
-          />
-        </div>
-      </div>
-
-      {/* Edit expense — bottom sheet on mobile, modal on desktop */}
-      {(() => {
-        const editExpenseFormJSX = (
-          <Form form={form} layout="vertical" onFinish={handleEditSave} className="pt-4">
-            <Form.Item label="Description" name="description" rules={[requiredRule('Enter a description')]}>
-              <Input maxLength={120} />
-            </Form.Item>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Form.Item label="Amount (₹)" name="amount" rules={[requiredRule('Enter amount')]}>
-                <InputNumber className="w-full" min={0.01} precision={2} />
-              </Form.Item>
-
-              <Form.Item label="Date" name="date" rules={[requiredRule('Pick a date')]}>
-                <DatePicker
-                  className="w-full"
-                  inputReadOnly
-                  getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-                />
-              </Form.Item>
-            </div>
-
-            <Form.Item label="Category" name="categoryId" rules={[requiredRule('Select a category')]}>
-              <Select
-                options={categoryOptions}
-                getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-              />
-            </Form.Item>
-
-            <Form.Item label="Spent By" name="spenderId">
-              <Select
-                options={spenderOptions}
-                allowClear
-                placeholder={spenders.length === 0 ? 'Add spenders first' : 'Select a spender'}
-                disabled={spenders.length === 0}
-                getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-              />
-            </Form.Item>
-
-            <Form.Item label="Notes" name="notes">
-              <Input.TextArea rows={2} maxLength={200} />
-            </Form.Item>
-
-            <div className="flex gap-3 justify-end">
-              <Button onClick={closeEdit}>Cancel</Button>
-              <Button type="primary" htmlType="submit">
-                Save Changes
-              </Button>
-            </div>
-          </Form>
-        )
-        return isMobile ? (
-          <Drawer
-            title="Edit Expense"
-            placement="bottom"
-            open={modalOpen}
-            onClose={closeEdit}
-            styles={{ body: { paddingBottom: 32, overflowY: 'auto' }, wrapper: { height: 'auto', maxHeight: '90dvh' } }}
-            destroyOnHidden
-          >
-            {editExpenseFormJSX}
-          </Drawer>
-        ) : (
-          <Modal title="Edit Expense" open={modalOpen} onCancel={closeEdit} footer={null} destroyOnHidden>
-            {editExpenseFormJSX}
-          </Modal>
-        )
-      })()}
-
-      {/* FAB — mobile only */}
-      <button
-        onClick={openAddModal}
-        className="lg:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-40
-                   w-14 h-14 rounded-full flex items-center justify-center
-                   active:scale-95 transition-transform duration-150"
-        style={{
-          background: token.colorPrimary,
-          boxShadow: `0 4px 20px ${token.colorPrimary}55, 0 2px 8px rgba(0,0,0,0.18)`,
-        }}
-        aria-label="Add expense"
-      >
-        <PlusOutlined style={{ fontSize: 22, color: '#fff' }} />
-      </button>
-
-      {/* Add Expense — bottom sheet on mobile, modal on desktop */}
-      {(() => {
-        const addExpenseFormJSX = (
-          <Form form={addForm} layout="vertical" onFinish={handleAddSave} className="pt-2">
-            <Form.Item label="Description" name="description" rules={[requiredRule('Enter a description')]}>
-              <Input maxLength={120} />
-            </Form.Item>
-            <div className="grid grid-cols-2 gap-4">
-              <Form.Item label="Amount (₹)" name="amount" rules={[requiredRule('Enter amount')]}>
-                <InputNumber className="w-full" min={0.01} precision={2} />
-              </Form.Item>
-              <Form.Item label="Date" name="date" rules={[requiredRule('Pick a date')]}>
-                <DatePicker
-                  className="w-full"
-                  inputReadOnly
-                  getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-                />
-              </Form.Item>
-            </div>
-            <Form.Item label="Category" name="categoryId" rules={[requiredRule('Select a category')]}>
-              <Select
-                options={categoryOptions}
-                getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-              />
-            </Form.Item>
-            <Form.Item label="Spent By" name="spenderId">
-              <Select
-                options={spenderOptions}
-                allowClear
-                placeholder={spenders.length === 0 ? 'Add spenders first' : 'Select a spender'}
-                disabled={spenders.length === 0}
-                getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-              />
-            </Form.Item>
-            <Form.Item label="Notes" name="notes">
-              <Input.TextArea rows={2} maxLength={200} />
-            </Form.Item>
-            <div className="flex gap-3 justify-end">
-              <Button onClick={closeAddModal}>Cancel</Button>
-              <Button type="primary" htmlType="submit" icon={<PlusOutlined />}>
-                Add Expense
-              </Button>
-            </div>
-          </Form>
-        )
-        return isMobile ? (
-          <Drawer
-            title="Add Expense"
-            placement="bottom"
-            open={addModalOpen}
-            onClose={closeAddModal}
-            styles={{ body: { paddingBottom: 32, overflowY: 'auto' }, wrapper: { height: 'auto', maxHeight: '90dvh' } }}
-            destroyOnHidden
-          >
-            {addExpenseFormJSX}
-          </Drawer>
-        ) : (
-          <Modal title="Add Expense" open={addModalOpen} onCancel={closeAddModal} footer={null} destroyOnHidden>
-            {addExpenseFormJSX}
-          </Modal>
-        )
-      })()}
     </div>
   )
 }

@@ -1,5 +1,5 @@
-import SpenderManager from '@/components/SpenderManager'
+import { redirect } from 'next/navigation'
 
 export default function SpendersPage() {
-  return <SpenderManager />
+  redirect('/settings')
 }
