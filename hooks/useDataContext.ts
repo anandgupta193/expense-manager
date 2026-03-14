@@ -23,6 +23,7 @@ export interface DataState {
   setExpenses: (expenses: Expense[]) => void
   setCategories: (categories: Category[]) => void
   setSpenders: (spenders: Spender[]) => void
+  refreshData: () => Promise<void>
 }
 
 export function useDataContext(user: User): DataState {
@@ -82,5 +83,14 @@ export function useDataContext(user: User): DataState {
     [uid]
   )
 
-  return { expenses, categories, spenders, dataLoading, setExpenses, setCategories, setSpenders }
+  const refreshData = useCallback(async () => {
+    setDataLoading(true)
+    const [exp, cats, spnds] = await Promise.all([fsGetExpenses(uid), fsGetCategories(uid), fsGetSpenders(uid)])
+    setExpensesState(exp)
+    setCategoriesState(cats)
+    setSpendersState(spnds)
+    setDataLoading(false)
+  }, [uid])
+
+  return { expenses, categories, spenders, dataLoading, setExpenses, setCategories, setSpenders, refreshData }
 }

@@ -1,9 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Avatar, Button, Dropdown, Spin, theme } from 'antd'
-import { SunOutlined, MoonOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons'
+import { SunOutlined, MoonOutlined, LogoutOutlined, UserOutlined, ReloadOutlined } from '@ant-design/icons'
 import type { User } from 'firebase/auth'
 import { useTheme, useAuthContext, DataProvider, useAppData } from '@/app/providers'
 import { useReminder } from '@/lib/useReminder'
@@ -24,8 +25,15 @@ function AuthenticatedShell({
 }) {
   const { token } = theme.useToken()
   const { theme: appTheme, toggleTheme } = useTheme()
-  const { dataLoading } = useAppData()
+  const { dataLoading, refreshData } = useAppData()
   const pathname = usePathname()
+  const [refreshing, setRefreshing] = useState(false)
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await refreshData()
+    setRefreshing(false)
+  }
   useReminder()
   useAppShell()
 
@@ -116,6 +124,15 @@ function AuthenticatedShell({
 
           {/* Right side: theme toggle + auth */}
           <div className="flex items-center gap-2">
+            <Button
+              type="text"
+              shape="circle"
+              icon={<ReloadOutlined spin={refreshing} />}
+              onClick={handleRefresh}
+              disabled={refreshing}
+              title="Refresh data"
+              style={{ color: token.colorTextSecondary }}
+            />
             <Button
               type="text"
               shape="circle"

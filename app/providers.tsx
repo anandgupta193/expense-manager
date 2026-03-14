@@ -79,6 +79,7 @@ const DataContext = createContext<DataState>({
   setExpenses: () => {},
   setCategories: () => {},
   setSpenders: () => {},
+  refreshData: async () => {},
 })
 
 export const useAppData = () => useContext(DataContext)

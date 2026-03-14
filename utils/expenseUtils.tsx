@@ -38,6 +38,20 @@ export function buildSpenderOptions(spenders: Spender[]) {
   }))
 }
 
+export function buildDescriptionOptions(expenses: Expense[]): { value: string }[] {
+  const sorted = [...expenses].sort((a, b) => (a.date < b.date ? 1 : -1))
+  const seen = new Set<string>()
+  const result: { value: string }[] = []
+  for (const exp of sorted) {
+    const key = exp.description.toLowerCase()
+    if (!seen.has(key)) {
+      seen.add(key)
+      result.push({ value: exp.description })
+    }
+  }
+  return result
+}
+
 export function buildTableColumns(
   catMap: Record<string, Category>,
   spenderMap: Record<string, Spender>,
