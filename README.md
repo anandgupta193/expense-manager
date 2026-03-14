@@ -23,18 +23,52 @@
 
 ## ✨ Features
 
-| Feature               | Details                                                             |
-| --------------------- | ------------------------------------------------------------------- |
-| 📊 **Dashboard**      | Total spend, monthly spend, top category, expense count at a glance |
-| 📈 **Charts**         | Donut chart + category breakdown bar with spend percentages         |
-| ➕ **Add Expenses**   | Description, amount (₹), category, date, optional notes & spender   |
-| ✏️ **Edit & Delete**  | Inline edit modal and one-click delete with confirmation            |
-| 🏷️ **Categories**     | Create, color-code, edit and delete custom categories               |
-| 👥 **Spenders**       | Track who spent what — filter the dashboard by spender              |
-| 🔔 **Daily Reminder** | Browser notification reminder at a configurable time                |
-| 🌙 **Dark Mode**      | Full dark/light theme toggle, persisted across sessions             |
-| 📱 **PWA**            | Installable on mobile/desktop, works fully offline                  |
-| ☁️ **Cloud Sync**     | Data synced to Firestore — access from any device after sign-in     |
+### 📊 Dashboard
+
+- **Monthly snapshot** — total spend for the selected month, transaction count, and top spending category at a glance
+- **Budget progress** — circular progress ring shows how much of your monthly budget remains; turns yellow → red as you approach the limit
+- **Donut chart** — visual breakdown of the top 5 spending categories for the selected month
+- **Category breakdown** — ranked list of every category with spend amount and percentage bar
+- **Filter by month** — switch between any past or current month using the month picker
+- **Filter by spender** — narrow the entire dashboard to one or more spenders (useful for shared households)
+
+### 🧾 Expenses
+
+- **Full expense table** — all transactions for the selected month with description, amount, category, date, spender, and notes
+- **Add expense** — quick-add form with description autocomplete (suggests from your history), amount, category, date, optional notes, and spender
+- **Edit expense** — tap any row to edit all fields; opens as a bottom sheet on mobile and a modal on desktop
+- **Delete expense** — remove any transaction with one tap
+- **Export to CSV** — download the current month's (or all) expenses as a CSV file for use in Excel or Sheets
+- **Month & spender filters** — independent from the Dashboard; set your own view on the Expenses page
+
+### 🏷️ Categories
+
+- **Custom categories** — create as many categories as you need with a name and a custom color
+- **Color picker** — choose any hex color to visually distinguish categories in charts and tables
+- **Edit & delete** — rename or recolor any category, or remove ones you no longer use
+- **7 defaults seeded on sign-in** — Food & Dining, Transport, Shopping, Entertainment, Health, Utilities, Other
+
+### ⚙️ Settings
+
+- **Monthly budget** — set a spending limit; the Dashboard shows a budget-remaining card with color-coded progress once a limit is set
+- **Daily reminder** — enable a browser push notification at a time you choose to remind yourself to log expenses
+- **Spenders** — add people (family members, roommates) to track who made each purchase; filter Dashboard and Expenses by spender
+
+### 🔐 Account & Sync
+
+- **Google Sign-In** — one-tap sign-in; no passwords to manage
+- **Real-time cloud sync** — all expenses, categories, and spenders are stored in Firestore and available on any device after sign-in
+- **Manual refresh** — tap the refresh button in the nav bar to force-sync the latest data from the cloud
+
+### 🎨 Appearance & Accessibility
+
+- **Dark / Light mode** — full theme toggle persisted across sessions; all components adapt via Ant Design tokens
+- **Mobile-first design** — bottom tab bar on mobile, sticky top nav on desktop; add/edit forms open as a bottom sheet on mobile for thumb-friendly access
+
+### 📱 PWA (Installable App)
+
+- **Install on any device** — add to home screen on iOS, Android, or desktop Chrome/Edge; runs like a native app
+- **Offline support** — service worker caches the app shell so it loads without a network connection; data syncs when connectivity returns
 
 ---
 
@@ -127,28 +161,29 @@ expense-manager/
 ├── app/                    # Next.js App Router pages & layout
 │   ├── layout.tsx          # Root layout (font, metadata, providers)
 │   ├── page.tsx            # / → Dashboard
-│   ├── add/page.tsx        # /add → Add Expense
+│   ├── expenses/page.tsx   # /expenses → Expense table + add/edit
 │   ├── categories/page.tsx # /categories → Category Manager
-│   ├── spenders/page.tsx   # /spenders → Spender Manager
-│   ├── settings/page.tsx   # /settings → Reminder Settings
+│   ├── settings/page.tsx   # /settings → Budget + Reminder + Spenders
+│   ├── spenders/page.tsx   # /spenders → redirects to /settings
 │   ├── auth/page.tsx       # /auth → Sign In
 │   ├── providers.tsx       # Auth + Theme + Data contexts, antd ConfigProvider
 │   └── manifest.ts         # PWA web manifest
 │
 ├── components/             # JSX-only UI components (no business logic)
-│   ├── AppShell.tsx        # Nav bar, bottom tab bar, auth UI (avatar/sign-out)
-│   ├── Dashboard.tsx       # Stats, charts, expense table
-│   ├── AddExpense.tsx      # Add expense form
+│   ├── AppShell.tsx        # Nav bar, bottom tab bar, auth UI, refresh button
+│   ├── Dashboard.tsx       # Stat cards, donut chart, category breakdown
+│   ├── ExpenseTable.tsx    # Expense table, filters, add/edit modals, FAB
 │   ├── CategoryManager.tsx # CRUD for categories
 │   ├── SpenderManager.tsx  # CRUD for spenders
-│   ├── SignInPage.tsx      # Google sign-in screen
-│   └── ReminderSettings.tsx# Notification toggle & time picker
+│   ├── BudgetSettings.tsx  # Monthly budget limit input
+│   ├── ReminderSettings.tsx# Notification toggle & time picker
+│   └── SignInPage.tsx      # Google sign-in screen
 │
 ├── hooks/                  # Custom React hooks (all state & logic)
 │   ├── useAuth.ts          # Firebase onAuthStateChanged wrapper
-│   ├── useDataContext.ts   # Loads + syncs Firestore data for authed user
-│   ├── useDashboard.ts
-│   ├── useAddExpense.ts
+│   ├── useDataContext.ts   # Loads + syncs Firestore data; exposes refreshData
+│   ├── useDashboard.ts     # Chart data, stat values, month/spender filters
+│   ├── useExpenseTable.ts  # Table state, add/edit/delete, export CSV
 │   ├── useCategoryManager.ts
 │   ├── useSpenderManager.ts
 │   ├── useReminderSettings.ts
@@ -156,7 +191,8 @@ expense-manager/
 │
 ├── utils/                  # Pure utility functions
 │   ├── formatters.ts       # formatINR, resolveColor
-│   └── expenseUtils.tsx    # currentMonthTotal, buildCategoryOptions, buildTableColumns
+│   ├── expenseUtils.tsx    # buildCategoryOptions, buildTableColumns, etc.
+│   └── exportUtils.ts      # exportExpensesToCSV
 │
 ├── constants/              # Static values
 │   ├── navigation.tsx      # NAV_ITEMS array
@@ -168,7 +204,7 @@ expense-manager/
 │
 ├── lib/                    # Core data layer
 │   ├── types.ts            # TypeScript interfaces
-│   ├── storage.ts          # localStorage wrappers (theme + reminder only)
+│   ├── storage.ts          # localStorage wrappers (theme + budget + reminder)
 │   ├── firebase.ts         # Lazy Firebase singletons (SSR-safe)
 │   ├── firestore.ts        # Async Firestore CRUD API (fs* functions)
 │   ├── defaultData.ts      # Exports DEFAULT_CATEGORIES
