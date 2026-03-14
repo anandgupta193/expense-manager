@@ -16,9 +16,11 @@ import {
   Typography,
   theme,
 } from 'antd'
+import { useRef } from 'react'
 import { DownloadOutlined, PlusOutlined } from '@ant-design/icons'
 import { useExpenseTable } from '@/hooks/useExpenseTable'
 import { requiredRule } from '@/constants/validation'
+import AddExpenseFAB, { type AddExpenseFABRef } from '@/components/AddExpenseFAB'
 
 const { Text } = Typography
 
@@ -26,6 +28,7 @@ export default function ExpenseTable() {
   const { token } = theme.useToken()
   const screens = Grid.useBreakpoint()
   const isMobile = screens.sm === false
+  const fabRef = useRef<AddExpenseFABRef>(null)
   const {
     spenders,
     selectedSpenderIds,
@@ -34,8 +37,6 @@ export default function ExpenseTable() {
     setSelectedMonth,
     modalOpen,
     form,
-    addModalOpen,
-    addForm,
     monthFilteredExpenses,
     columns,
     categoryOptions,
@@ -44,9 +45,6 @@ export default function ExpenseTable() {
     setDescriptionInput,
     closeEdit,
     handleEditSave,
-    openAddModal,
-    closeAddModal,
-    handleAddSave,
     handleExportCSV,
   } = useExpenseTable()
 
@@ -80,7 +78,7 @@ export default function ExpenseTable() {
             inputReadOnly
           />
           <div className="hidden sm:flex">
-            <Button type="primary" icon={<PlusOutlined />} onClick={openAddModal}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => fabRef.current?.open()}>
               Add Expense
             </Button>
           </div>
@@ -131,20 +129,7 @@ export default function ExpenseTable() {
         </div>
       </div>
 
-      {/* FAB — mobile only */}
-      <button
-        onClick={openAddModal}
-        className="lg:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-40
-                   w-14 h-14 rounded-full flex items-center justify-center
-                   active:scale-95 transition-transform duration-150"
-        style={{
-          background: token.colorPrimary,
-          boxShadow: `0 4px 20px ${token.colorPrimary}55, 0 2px 8px rgba(0,0,0,0.18)`,
-        }}
-        aria-label="Add expense"
-      >
-        <PlusOutlined style={{ fontSize: 22, color: '#fff' }} />
-      </button>
+      <AddExpenseFAB ref={fabRef} />
 
       {/* Edit expense — bottom sheet on mobile, modal on desktop */}
       {(() => {
@@ -157,7 +142,7 @@ export default function ExpenseTable() {
                 listHeight={200}
                 getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
               >
-                <Input maxLength={120} inputMode={isMobile ? 'none' : 'text'} />
+                <Input maxLength={120} inputMode="text" />
               </AutoComplete>
             </Form.Item>
 
@@ -220,78 +205,6 @@ export default function ExpenseTable() {
         ) : (
           <Modal title="Edit Expense" open={modalOpen} onCancel={closeEdit} footer={null} destroyOnHidden>
             {editExpenseFormJSX}
-          </Modal>
-        )
-      })()}
-
-      {/* Add Expense — bottom sheet on mobile, modal on desktop */}
-      {(() => {
-        const addExpenseFormJSX = (
-          <Form form={addForm} layout="vertical" onFinish={handleAddSave} className="pt-2">
-            <Form.Item label="Description" name="description" rules={[requiredRule('Enter a description')]}>
-              <AutoComplete
-                options={descriptionOptions}
-                onSearch={setDescriptionInput}
-                listHeight={200}
-                getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-              >
-                <Input maxLength={120} inputMode={isMobile ? 'none' : 'text'} />
-              </AutoComplete>
-            </Form.Item>
-            <div className="grid grid-cols-2 gap-4">
-              <Form.Item label="Amount (₹)" name="amount" rules={[requiredRule('Enter amount')]}>
-                <InputNumber className="w-full" min={0.01} precision={2} />
-              </Form.Item>
-              <Form.Item label="Date" name="date" rules={[requiredRule('Pick a date')]}>
-                <DatePicker
-                  className="w-full"
-                  inputReadOnly
-                  getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-                />
-              </Form.Item>
-            </div>
-            <Form.Item label="Category" name="categoryId" rules={[requiredRule('Select a category')]}>
-              <Select
-                showSearch={false}
-                options={categoryOptions}
-                getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-              />
-            </Form.Item>
-            <Form.Item label="Spent By" name="spenderId">
-              <Select
-                showSearch={false}
-                options={spenderOptions}
-                allowClear
-                placeholder={spenders.length === 0 ? 'Add spenders first' : 'Select a spender'}
-                disabled={spenders.length === 0}
-                getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-              />
-            </Form.Item>
-            <Form.Item label="Notes" name="notes">
-              <Input.TextArea rows={2} maxLength={200} />
-            </Form.Item>
-            <div className="flex gap-3 justify-end">
-              <Button onClick={closeAddModal}>Cancel</Button>
-              <Button type="primary" htmlType="submit" icon={<PlusOutlined />}>
-                Add Expense
-              </Button>
-            </div>
-          </Form>
-        )
-        return isMobile ? (
-          <Drawer
-            title="Add Expense"
-            placement="bottom"
-            open={addModalOpen}
-            onClose={closeAddModal}
-            styles={{ body: { paddingBottom: 32, overflowY: 'auto' }, wrapper: { height: 'auto', maxHeight: '90dvh' } }}
-            destroyOnHidden
-          >
-            {addExpenseFormJSX}
-          </Drawer>
-        ) : (
-          <Modal title="Add Expense" open={addModalOpen} onCancel={closeAddModal} footer={null} destroyOnHidden>
-            {addExpenseFormJSX}
           </Modal>
         )
       })()}

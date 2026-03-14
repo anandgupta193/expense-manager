@@ -8,6 +8,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { useDashboard } from '@/hooks/useDashboard'
 import { formatINR } from '@/utils/formatters'
 import { storage } from '@/lib/storage'
+import AddExpenseFAB from '@/components/AddExpenseFAB'
 
 const { Title, Text } = Typography
 
@@ -414,6 +415,8 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      <AddExpenseFAB />
     </div>
   )
 }

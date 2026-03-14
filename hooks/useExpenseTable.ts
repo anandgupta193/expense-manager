@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { App, Form, theme } from 'antd'
+import { Form, theme } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useAppData } from '@/app/providers'
@@ -23,18 +23,8 @@ interface EditFormValues {
   spenderId?: string
 }
 
-interface AddFormValues {
-  description: string
-  amount: number
-  categoryId: string
-  date: Dayjs
-  notes?: string
-  spenderId?: string
-}
-
 export function useExpenseTable() {
   const { token } = theme.useToken()
-  const { message } = App.useApp()
   const { expenses, categories, spenders, setExpenses } = useAppData()
   const [selectedSpenderIds, setSelectedSpenderIds] = useState<string[]>([])
   const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(dayjs())
@@ -42,8 +32,6 @@ export function useExpenseTable() {
   const [modalOpen, setModalOpen] = useState(false)
   const [descriptionInput, setDescriptionInput] = useState('')
   const [form] = Form.useForm<EditFormValues>()
-  const [addModalOpen, setAddModalOpen] = useState(false)
-  const [addForm] = Form.useForm<AddFormValues>()
 
   const catMap = Object.fromEntries(categories.map((c) => [c.id, c]))
   const spenderMap = Object.fromEntries(spenders.map((s) => [s.id, s]))
@@ -83,32 +71,6 @@ export function useExpenseTable() {
     setModalOpen(false)
     setEditTarget(null)
     setDescriptionInput('')
-  }
-
-  function openAddModal() {
-    addForm.resetFields()
-    addForm.setFieldsValue({ date: dayjs(), categoryId: 'cat-other' })
-    setDescriptionInput('')
-    setAddModalOpen(true)
-  }
-
-  function closeAddModal() {
-    setAddModalOpen(false)
-  }
-
-  function handleAddSave(values: AddFormValues) {
-    const newExpense: Expense = {
-      id: crypto.randomUUID(),
-      date: values.date.format('YYYY-MM-DD'),
-      description: values.description.trim(),
-      amount: values.amount,
-      categoryId: values.categoryId,
-      spenderId: values.spenderId || undefined,
-      notes: values.notes?.trim() || undefined,
-    }
-    setExpenses([newExpense, ...expenses])
-    closeAddModal()
-    message.success('Expense added!')
   }
 
   function handleDelete(id: string) {
@@ -154,8 +116,6 @@ export function useExpenseTable() {
     setSelectedMonth,
     modalOpen,
     form,
-    addModalOpen,
-    addForm,
     monthFilteredExpenses,
     columns,
     categoryOptions,
@@ -165,9 +125,6 @@ export function useExpenseTable() {
     openEdit,
     closeEdit,
     handleEditSave,
-    openAddModal,
-    closeAddModal,
-    handleAddSave,
     handleExportCSV,
   }
 }
