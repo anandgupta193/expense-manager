@@ -1,6 +1,6 @@
 import { collection, doc, getDocs, setDoc, writeBatch } from 'firebase/firestore'
 import { getFirebaseDb } from './firebase'
-import type { Category, Expense, ReminderConfig, Spender, Theme } from './types'
+import type { BudgetConfig, Category, Expense, ReminderConfig, Spender, Theme } from './types'
 import { DEFAULT_CATEGORIES } from './defaultData'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -70,6 +70,7 @@ interface CloudSettings {
   theme?: Theme
   reminder?: ReminderConfig
   migrated?: boolean
+  budget?: BudgetConfig
 }
 
 export async function fsGetSettings(uid: string): Promise<CloudSettings> {

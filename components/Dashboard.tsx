@@ -7,7 +7,7 @@ import { RiseOutlined, FallOutlined, CalendarOutlined } from '@ant-design/icons'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { useDashboard } from '@/hooks/useDashboard'
 import { formatINR } from '@/utils/formatters'
-import { storage } from '@/lib/storage'
+import { useBudgetContext } from '@/app/providers'
 import AddExpenseFAB from '@/components/AddExpenseFAB'
 
 const { Title, Text } = Typography
@@ -149,7 +149,7 @@ function BudgetStatCard({
 
 export default function Dashboard() {
   const { token } = theme.useToken()
-  const [budget] = useState(() => storage.getBudget())
+  const { budget } = useBudgetContext()
   const {
     spenders,
     selectedSpenderIds,

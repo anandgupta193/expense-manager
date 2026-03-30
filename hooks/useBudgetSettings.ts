@@ -1,16 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { storage } from '@/lib/storage'
-import type { BudgetConfig } from '@/lib/types'
+import { useBudgetContext } from '@/app/providers'
 
 export function useBudgetSettings() {
-  const [config, setConfig] = useState<BudgetConfig>(() => storage.getBudget())
+  const { budget: config, setBudget } = useBudgetContext()
 
   function handleLimitChange(value: number | null) {
-    const next: BudgetConfig = { monthlyLimit: value ?? null }
-    setConfig(next)
-    storage.setBudget(next)
+    setBudget({ monthlyLimit: value ?? null })
   }
 
   return { config, handleLimitChange }

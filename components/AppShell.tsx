@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { Avatar, Button, Dropdown, Spin, theme } from 'antd'
 import { SunOutlined, MoonOutlined, LogoutOutlined, UserOutlined, ReloadOutlined } from '@ant-design/icons'
 import type { User } from 'firebase/auth'
-import { useTheme, useAuthContext, DataProvider, useAppData } from '@/app/providers'
+import { useTheme, useAuthContext, DataProvider, BudgetProvider, useAppData } from '@/app/providers'
 import { useReminder } from '@/lib/useReminder'
 import { NAV_ITEMS } from '@/constants/navigation'
 import { useAppShell } from '@/hooks/useAppShell'
@@ -236,9 +236,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <DataProvider user={user}>
-      <AuthenticatedShell user={user} signOut={signOut}>
-        {children}
-      </AuthenticatedShell>
+      <BudgetProvider user={user}>
+        <AuthenticatedShell user={user} signOut={signOut}>
+          {children}
+        </AuthenticatedShell>
+      </BudgetProvider>
     </DataProvider>
   )
 }

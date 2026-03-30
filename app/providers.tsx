@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { App, ConfigProvider, theme as antTheme } from 'antd'
 import { storage } from '@/lib/storage'
-import type { Theme } from '@/lib/types'
+import type { BudgetConfig, Theme } from '@/lib/types'
+import { fsGetSettings, fsSetSettings } from '@/lib/firestore'
 import { FONT_FAMILY_CSS_VAR } from '@/config/fonts'
 import { useAuth, type AuthState } from '@/hooks/useAuth'
 import { useDataContext, type DataState } from '@/hooks/useDataContext'
@@ -67,6 +68,43 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
       </ConfigProvider>
     </ThemeContext.Provider>
   )
+}
+
+// ── Budget context ────────────────────────────────────────────────────────────
+
+interface BudgetContextType {
+  budget: BudgetConfig
+  setBudget: (b: BudgetConfig) => void
+}
+
+const BudgetContext = createContext<BudgetContextType>({
+  budget: { monthlyLimit: null },
+  setBudget: () => {},
+})
+
+export const useBudgetContext = () => useContext(BudgetContext)
+
+export function BudgetProvider({ user, children }: { user: import('firebase/auth').User; children: React.ReactNode }) {
+  const [budget, setBudgetState] = useState<BudgetConfig>(() => storage.getBudget())
+
+  useEffect(() => {
+    fsGetSettings(user.uid)
+      .then((settings) => {
+        if (settings.budget) {
+          setBudgetState(settings.budget)
+          storage.setBudget(settings.budget)
+        }
+      })
+      .catch(console.error)
+  }, [user.uid])
+
+  function setBudget(b: BudgetConfig) {
+    setBudgetState(b)
+    storage.setBudget(b)
+    fsSetSettings(user.uid, { budget: b }).catch(console.error)
+  }
+
+  return <BudgetContext.Provider value={{ budget, setBudget }}>{children}</BudgetContext.Provider>
 }
 
 // ── Data context ──────────────────────────────────────────────────────────────
