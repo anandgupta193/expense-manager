@@ -1,5 +1,5 @@
 const CACHE_NAME = 'em-v1'
-const STATIC_URLS = ['/', '/add', '/categories', '/settings']
+const STATIC_URLS = ['/', '/add', '/categories', '/settings', '/offline']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_URLS)))
@@ -22,6 +22,11 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_NAME).then((c) => c.put(event.request, clone))
         return res
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => {
+        if (event.request.mode === 'navigate') {
+          return caches.match('/offline')
+        }
+        return caches.match(event.request)
+      })
   )
 })
