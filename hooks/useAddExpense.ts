@@ -38,6 +38,7 @@ export function useAddExpense() {
     const newExpense: Expense = {
       id: crypto.randomUUID(),
       date: values.date.format('YYYY-MM-DD'),
+      time: values.date.format('HH:mm'),
       description: values.description.trim(),
       amount: values.amount,
       categoryId: values.categoryId,

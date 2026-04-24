@@ -65,7 +65,11 @@ export function buildTableColumns(
       dataIndex: 'date',
       key: 'date',
       width: 112,
-      sorter: (a: Expense, b: Expense) => a.date.localeCompare(b.date),
+      sorter: (a: Expense, b: Expense) => {
+        const aKey = `${a.date} ${a.time ?? '00:00'}`
+        const bKey = `${b.date} ${b.time ?? '00:00'}`
+        return aKey.localeCompare(bKey)
+      },
       defaultSortOrder: 'descend' as const,
     },
     {

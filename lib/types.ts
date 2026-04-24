@@ -16,6 +16,7 @@ export interface Expense {
   amount: number
   categoryId: string
   date: string // YYYY-MM-DD
+  time?: string // HH:mm
   notes?: string
   spenderId?: string
 }

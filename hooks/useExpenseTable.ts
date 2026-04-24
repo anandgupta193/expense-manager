@@ -27,6 +27,7 @@ export function useExpenseTable() {
   const { token } = theme.useToken()
   const { expenses, categories, spenders, setExpenses } = useAppData()
   const [selectedSpenderIds, setSelectedSpenderIds] = useState<string[]>([])
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(dayjs())
   const [editTarget, setEditTarget] = useState<Expense | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -41,10 +42,13 @@ export function useExpenseTable() {
       ? expenses
       : expenses.filter((e) => e.spenderId && selectedSpenderIds.includes(e.spenderId))
 
+  const categoryFilteredExpenses =
+    selectedCategoryId === null ? filteredExpenses : filteredExpenses.filter((e) => e.categoryId === selectedCategoryId)
+
   const monthFilteredExpenses =
     selectedMonth === null
-      ? filteredExpenses
-      : filteredExpenses.filter((e) => {
+      ? categoryFilteredExpenses
+      : categoryFilteredExpenses.filter((e) => {
           const d = dayjs(e.date)
           return d.month() === selectedMonth.month() && d.year() === selectedMonth.year()
         })
@@ -60,7 +64,7 @@ export function useExpenseTable() {
       description: expense.description,
       amount: expense.amount,
       categoryId: expense.categoryId,
-      date: dayjs(expense.date),
+      date: dayjs(`${expense.date} ${expense.time ?? '00:00'}`),
       notes: expense.notes,
       spenderId: expense.spenderId,
     })
@@ -87,6 +91,7 @@ export function useExpenseTable() {
             amount: values.amount,
             categoryId: values.categoryId,
             date: values.date.format('YYYY-MM-DD'),
+            time: values.date.format('HH:mm'),
             notes: values.notes?.trim() || undefined,
             spenderId: values.spenderId || undefined,
           }
@@ -112,6 +117,8 @@ export function useExpenseTable() {
     spenders,
     selectedSpenderIds,
     setSelectedSpenderIds,
+    selectedCategoryId,
+    setSelectedCategoryId,
     selectedMonth,
     setSelectedMonth,
     modalOpen,

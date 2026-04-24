@@ -33,6 +33,8 @@ export default function ExpenseTable() {
     spenders,
     selectedSpenderIds,
     setSelectedSpenderIds,
+    selectedCategoryId,
+    setSelectedCategoryId,
     selectedMonth,
     setSelectedMonth,
     modalOpen,
@@ -58,6 +60,14 @@ export default function ExpenseTable() {
           </Text>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Select
+            allowClear
+            placeholder="All categories"
+            options={categoryOptions}
+            value={selectedCategoryId}
+            onChange={(v) => setSelectedCategoryId(v ?? null)}
+            style={{ minWidth: 140 }}
+          />
           {spenders.length > 0 && (
             <Select
               mode="multiple"
@@ -151,9 +161,11 @@ export default function ExpenseTable() {
                 <InputNumber className="w-full" min={0.01} precision={2} />
               </Form.Item>
 
-              <Form.Item label="Date" name="date" rules={[requiredRule('Pick a date')]}>
+              <Form.Item label="Date & Time" name="date" rules={[requiredRule('Pick a date')]}>
                 <DatePicker
                   className="w-full"
+                  showTime={{ format: 'HH:mm', minuteStep: 5 }}
+                  format="YYYY-MM-DD HH:mm"
                   inputReadOnly
                   getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
                 />

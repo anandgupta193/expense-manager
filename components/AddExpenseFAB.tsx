@@ -45,9 +45,11 @@ const AddExpenseFAB = forwardRef<AddExpenseFABRef>(function AddExpenseFAB(_, ref
         <Form.Item label="Amount (₹)" name="amount" rules={[requiredRule('Enter amount')]}>
           <InputNumber className="w-full" min={0.01} precision={2} />
         </Form.Item>
-        <Form.Item label="Date" name="date" rules={[requiredRule('Pick a date')]}>
+        <Form.Item label="Date & Time" name="date" rules={[requiredRule('Pick a date')]}>
           <DatePicker
             className="w-full"
+            showTime={{ format: 'HH:mm', minuteStep: 5 }}
+            format="YYYY-MM-DD HH:mm"
             inputReadOnly
             getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
           />
