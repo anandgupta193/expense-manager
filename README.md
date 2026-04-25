@@ -27,19 +27,20 @@
 
 - **Monthly snapshot** — total spend for the selected month, transaction count, and top spending category at a glance
 - **Budget progress** — circular progress ring shows how much of your monthly budget remains; turns yellow → red as you approach the limit
+- **Daily spending chart** — line chart showing per-day totals for the selected month so you can spot high-spend days at a glance
 - **Donut chart** — visual breakdown of the top 5 spending categories for the selected month
 - **Category breakdown** — ranked list of every category with spend amount and percentage bar
 - **Filter by month** — switch between any past or current month using the month picker
-- **Filter by spender** — narrow the entire dashboard to one or more spenders (useful for shared households)
+- **Filter by spender** — narrow the entire dashboard to a single spender (useful for shared households)
 
 ### 🧾 Expenses
 
 - **Full expense table** — all transactions for the selected month with description, amount, category, date, spender, and notes
-- **Add expense** — quick-add form with description autocomplete (suggests from your history), amount, category, date, optional notes, and spender
+- **Add expense** — quick-add form with description autocomplete, amount, category, date (time is auto-captured on save), optional notes, and spender
 - **Edit expense** — tap any row to edit all fields; opens as a bottom sheet on mobile and a modal on desktop
 - **Delete expense** — remove any transaction with one tap
 - **Export to CSV** — download the current month's (or all) expenses as a CSV file for use in Excel or Sheets
-- **Month & spender filters** — independent from the Dashboard; set your own view on the Expenses page
+- **Month & spender filters** — independent from the Dashboard; single-select spender filter, set your own view on the Expenses page
 
 ### 🏷️ Categories
 
@@ -69,6 +70,8 @@
 
 - **Install on any device** — add to home screen on iOS, Android, or desktop Chrome/Edge; runs like a native app
 - **Offline support** — service worker caches the app shell so it loads without a network connection; data syncs when connectivity returns
+- **Home screen shortcut** — long-press the app icon to reveal an "Add Expense" quick action (Android Chrome + iOS 16.4+)
+- **Back Tap / gesture support** — navigate to `/?action=add` (e.g. via an iOS Back Tap shortcut or Android Quick Tap) to open the app with the Add Expense modal already visible
 
 ---
 
@@ -139,18 +142,18 @@ Open [http://localhost:3000](http://localhost:3000) and sign in with Google.
 
 ## 🛠️ Tech Stack
 
-| Layer      | Technology                                       |
-| ---------- | ------------------------------------------------ |
-| Framework  | [Next.js 16](https://nextjs.org) (App Router)    |
-| UI Library | [Ant Design 6](https://ant.design)               |
-| Styling    | [Tailwind CSS 4](https://tailwindcss.com)        |
-| Charts     | [Recharts 3](https://recharts.org)               |
-| Language   | TypeScript 5                                     |
-| Auth       | Firebase Authentication (Google Sign-In)         |
-| Database   | Cloud Firestore — expenses, categories, spenders |
-| Local      | `localStorage` — theme + reminder config only    |
-| PWA        | Custom service worker + Web Manifest             |
-| Linting    | ESLint + Prettier + Husky pre-commit             |
+| Layer      | Technology                                                         |
+| ---------- | ------------------------------------------------------------------ |
+| Framework  | [Next.js 16](https://nextjs.org) (App Router)                      |
+| UI Library | [Ant Design 6](https://ant.design)                                 |
+| Styling    | [Tailwind CSS 4](https://tailwindcss.com)                          |
+| Charts     | [Recharts 3](https://recharts.org)                                 |
+| Language   | TypeScript 5                                                       |
+| Auth       | Firebase Authentication (Google Sign-In)                           |
+| Database   | Cloud Firestore — expenses, categories, spenders                   |
+| Local      | `localStorage` — theme + reminder only; budget synced to Firestore |
+| PWA        | Custom service worker + Web Manifest                               |
+| Linting    | ESLint + Prettier + Husky pre-commit                               |
 
 ---
 
@@ -171,7 +174,8 @@ expense-manager/
 │
 ├── components/             # JSX-only UI components (no business logic)
 │   ├── AppShell.tsx        # Nav bar, bottom tab bar, auth UI, refresh button
-│   ├── Dashboard.tsx       # Stat cards, donut chart, category breakdown
+│   ├── Dashboard.tsx       # Stat cards, daily chart, donut chart, category breakdown
+│   ├── AddExpenseFAB.tsx   # Floating add button + add expense drawer/modal (forwardRef)
 │   ├── ExpenseTable.tsx    # Expense table, filters, add/edit modals, FAB
 │   ├── CategoryManager.tsx # CRUD for categories
 │   ├── SpenderManager.tsx  # CRUD for spenders
@@ -182,7 +186,8 @@ expense-manager/
 ├── hooks/                  # Custom React hooks (all state & logic)
 │   ├── useAuth.ts          # Firebase onAuthStateChanged wrapper
 │   ├── useDataContext.ts   # Loads + syncs Firestore data; exposes refreshData
-│   ├── useDashboard.ts     # Chart data, stat values, month/spender filters
+│   ├── useAddExpense.ts    # Add expense form state; auto-captures time on save
+│   ├── useDashboard.ts     # Chart data, stat values, month/spender filters, daily chart data
 │   ├── useExpenseTable.ts  # Table state, add/edit/delete, export CSV
 │   ├── useCategoryManager.ts
 │   ├── useSpenderManager.ts
@@ -229,6 +234,7 @@ Expenses, categories, and spenders live in **Firestore** under `users/{uid}/`. T
 | `expenses`   | `expense.id`  | `Expense`  | All recorded expenses                               |
 | `categories` | `category.id` | `Category` | Seeded with 7 defaults on first sign-in             |
 | `spenders`   | `spender.id`  | `Spender`  | Seeded with the user's own spender on first sign-in |
+| `settings`   | `"data"`      | object     | Holds `budget`, `theme`, `reminder`, `migrated`     |
 
 ### localStorage
 
@@ -245,7 +251,8 @@ interface Expense {
   description: string
   amount: number // INR
   categoryId: string
-  date: string // "YYYY-MM-DD"
+  date: string // "YYYY-MM-DD" — user-selected
+  time?: string // "HH:mm" — auto-captured at save time
   notes?: string
   spenderId?: string
 }

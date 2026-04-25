@@ -5,7 +5,18 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import dayjs from 'dayjs'
 import { DatePicker, Empty, Progress, Select, Typography, theme, Tag } from 'antd'
 import { RiseOutlined, FallOutlined, CalendarOutlined } from '@ant-design/icons'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
 import { useDashboard } from '@/hooks/useDashboard'
 import { formatINR } from '@/utils/formatters'
 import { useBudgetContext, useAppData } from '@/app/providers'
@@ -173,6 +184,7 @@ export default function Dashboard() {
     topCat,
     allCategoryData,
     chartData,
+    dailyChartData,
     spenderOptions,
   } = useDashboard()
 
@@ -267,6 +279,50 @@ export default function Dashboard() {
             color={token.colorError}
             animDelay="130ms"
           />
+        </div>
+      </div>
+
+      {/* Daily spending line chart */}
+      <div
+        className="fade-up rounded-2xl p-5"
+        style={{ background: token.colorBgContainer, border: `1px solid ${token.colorBorderSecondary}` }}
+      >
+        <Text strong style={{ fontSize: 14, fontWeight: 600 }}>
+          Daily Spending
+        </Text>
+        <div className="mt-3">
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={dailyChartData} margin={{ top: 8, right: 12, left: 12, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={token.colorBorderSecondary} vertical={false} />
+              <XAxis
+                dataKey="day"
+                ticks={[1, 5, 10, 15, 20, 25, 30]}
+                tick={{ fontSize: 11, fill: token.colorTextTertiary }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis hide />
+              <Tooltip
+                formatter={(value) => [formatINR(Number(value)), 'Spent']}
+                contentStyle={{
+                  background: token.colorBgElevated,
+                  border: `1px solid ${token.colorBorderSecondary}`,
+                  borderRadius: 8,
+                  fontSize: 12,
+                  color: token.colorText,
+                }}
+                labelFormatter={(day) => `${selectedMonth?.format('MMM')} ${day}`}
+              />
+              <Line
+                type="monotone"
+                dataKey="total"
+                stroke={token.colorPrimary}
+                strokeWidth={2}
+                dot={{ r: 2, fill: token.colorPrimary, strokeWidth: 0 }}
+                activeDot={{ r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
 

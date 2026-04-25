@@ -50,6 +50,20 @@ export function useDashboard() {
 
   const chartData: ChartData[] = allCategoryData.slice(0, 5)
 
+  const dailyChartData = (() => {
+    if (!selectedMonth) return []
+    const daysInMonth = selectedMonth.daysInMonth()
+    const totals: Record<string, number> = {}
+    monthFilteredExpenses.forEach((e) => {
+      totals[e.date] = (totals[e.date] ?? 0) + e.amount
+    })
+    return Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1
+      const dateKey = selectedMonth.date(day).format('YYYY-MM-DD')
+      return { day, total: totals[dateKey] ?? 0 }
+    })
+  })()
+
   const spenderOptions = buildSpenderOptions(spenders)
 
   return {
@@ -63,6 +77,7 @@ export function useDashboard() {
     topCat,
     allCategoryData,
     chartData,
+    dailyChartData,
     spenderOptions,
   }
 }

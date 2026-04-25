@@ -8,7 +8,8 @@ interface Expense {
   description: string
   amount: number // always positive, INR
   categoryId: string // references Category.id
-  date: string // "YYYY-MM-DD"
+  date: string // "YYYY-MM-DD" — user-selected
+  time?: string // "HH:mm" — auto-captured via Date.now() at save time (not user input)
   notes?: string
   spenderId?: string // optional, references Spender.id
 }
@@ -43,12 +44,12 @@ interface BudgetConfig {
 
 Primary data store. Path: `users/{uid}/{collection}/{docId}`.
 
-| Collection   | Doc ID        | Type            | Notes                                           |
-| ------------ | ------------- | --------------- | ----------------------------------------------- |
-| `expenses`   | `expense.id`  | `Expense`       | `undefined` fields stripped before write        |
-| `categories` | `category.id` | `Category`      | Seeded on first sign-in if empty                |
-| `spenders`   | `spender.id`  | `Spender`       | Seeded with user's own spender on first sign-in |
-| `settings`   | `"data"`      | `CloudSettings` | Merged; holds `theme`, `reminder`, `migrated`   |
+| Collection   | Doc ID        | Type            | Notes                                                   |
+| ------------ | ------------- | --------------- | ------------------------------------------------------- |
+| `expenses`   | `expense.id`  | `Expense`       | `undefined` fields stripped before write                |
+| `categories` | `category.id` | `Category`      | Seeded on first sign-in if empty                        |
+| `spenders`   | `spender.id`  | `Spender`       | Seeded with user's own spender on first sign-in         |
+| `settings`   | `"data"`      | `CloudSettings` | Merged; holds `theme`, `reminder`, `migrated`, `budget` |
 
 ### Firestore API (`lib/firestore.ts`)
 
@@ -73,13 +74,12 @@ All writes use Firestore `writeBatch` for atomicity (batch replace = delete all 
 
 ## localStorage Schema
 
-Used only for **theme**, **reminder**, and **budget** (not synced to Firestore).
+Used only for **theme** and **reminder** config. Budget config is synced to Firestore via `BudgetContext`.
 
 | Key           | Type                | Default                             |
 | ------------- | ------------------- | ----------------------------------- |
 | `em-theme`    | `'light' \| 'dark'` | `'light'`                           |
 | `em-reminder` | `ReminderConfig`    | `{ enabled: false, time: "23:00" }` |
-| `em-budget`   | `BudgetConfig`      | `{ enabled: false }`                |
 
 ### Storage API (`lib/storage.ts`)
 
@@ -91,9 +91,6 @@ storage.setTheme(theme: Theme) → void
 
 storage.getReminder()   → ReminderConfig
 storage.setReminder(config: ReminderConfig) → void
-
-storage.getBudget()     → BudgetConfig
-storage.setBudget(config: BudgetConfig) → void
 ```
 
 ## Default Seeding (new users)

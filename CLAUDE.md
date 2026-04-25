@@ -37,23 +37,24 @@ components/       # UI only — import from hooks/, constants/, utils/
 
 ### Data layer — `lib/`
 
-Expenses, categories, and spenders live in **Firestore** (`users/{uid}/expenses|categories|spenders`). Theme, reminder, and budget config remain in **localStorage**.
+Expenses, categories, spenders, and budget config live in **Firestore** (`users/{uid}/expenses|categories|spenders|settings`). Theme and reminder config remain in **localStorage**.
 
 - `lib/types.ts` — `Expense`, `Category`, `Spender`, `Theme`, `ReminderConfig`, `BudgetConfig` interfaces
-- `lib/storage.ts` — localStorage wrappers for theme, reminder, and budget
+- `lib/storage.ts` — localStorage wrappers for theme and reminder only
 - `lib/firebase.ts` — lazy Firebase singletons via `getFirebaseAuth()` / `getFirebaseDb()` (avoids SSR failures)
 - `lib/firestore.ts` — async Firestore API: `fsGetExpenses`, `fsSetExpenses`, `fsGetCategories`, `fsSetCategories`, `fsGetSpenders`, `fsSetSpenders`, `fsSeedDefaultCategories`, `fsSeedDefaultSpender`
 - `lib/defaultData.ts` — imports `DEFAULT_CATEGORIES` from `config/categories.json`
 
 ### Auth and data contexts — `app/providers.tsx`
 
-`app/providers.tsx` exposes three contexts:
+`app/providers.tsx` exposes four contexts:
 
-| Export             | Hook                              | What it provides                                                                           |
-| ------------------ | --------------------------------- | ------------------------------------------------------------------------------------------ |
-| `useTheme()`       | `ThemeProvider`                   | `{ theme, toggleTheme }`                                                                   |
-| `useAuthContext()` | `AuthProvider` → `useAuth`        | `{ user, loading, signInWithGoogle, signOut }`                                             |
-| `useAppData()`     | `DataProvider` → `useDataContext` | `{ expenses, categories, spenders, dataLoading, setExpenses, setCategories, setSpenders }` |
+| Export               | Hook                              | What it provides                                                                           |
+| -------------------- | --------------------------------- | ------------------------------------------------------------------------------------------ |
+| `useTheme()`         | `ThemeProvider`                   | `{ theme, toggleTheme }`                                                                   |
+| `useAuthContext()`   | `AuthProvider` → `useAuth`        | `{ user, loading, signInWithGoogle, signOut }`                                             |
+| `useAppData()`       | `DataProvider` → `useDataContext` | `{ expenses, categories, spenders, dataLoading, setExpenses, setCategories, setSpenders }` |
+| `useBudgetContext()` | `BudgetProvider`                  | `{ budget, setBudget }` — budget config synced to `users/{uid}/settings.budget`            |
 
 **`DataProvider`** is only mounted when `user` is non-null (rendered by `AppShell` after auth check). All data hooks read from `useAppData()` — they do **not** touch localStorage or Firestore directly.
 
@@ -74,15 +75,18 @@ app/layout.tsx            → wraps with <Providers><AppShell>
 
 `components/AppShell.tsx` renders the sticky top nav (desktop) and fixed bottom tab bar (mobile), registers the service worker, and handles auth UI (Google sign-in button / user avatar + sign-out menu).
 
+`components/AddExpenseFAB.tsx` is a `forwardRef` component (ref type `AddExpenseFABRef { open() }`) that renders the floating add button and the add expense drawer/modal. It is used in both `Dashboard.tsx` and `ExpenseTable.tsx`. The `useAddExpense` hook owns its form state; the `time` field on new expenses is auto-captured via `Date.now()` at save time — there is no time picker in the form.
+
 ### Environment setup
 
 Copy `.env.local.example` to `.env.local` and fill in Firebase project values (`NEXT_PUBLIC_FIREBASE_*`). Without these, Firebase init is skipped and the app shows a sign-in page that does nothing.
 
 ### PWA
 
-- `app/manifest.ts` — Next.js built-in manifest route (`/manifest.webmanifest`)
+- `app/manifest.ts` — Next.js built-in manifest route (`/manifest.webmanifest`); includes a `shortcuts` array so long-pressing the home screen icon shows an "Add Expense" quick action on Android and iOS 16.4+
 - `public/sw.js` — network-first service worker with fallback to cache
 - Icons at `public/icons/icon-192.svg` and `icon-512.svg`
+- `/?action=add` — navigating to the dashboard with this query param auto-opens the Add Expense modal (modal opens after data loads, then URL is replaced with `/`). Used by iOS Back Tap / Android shortcuts.
 
 ### Styling conventions
 

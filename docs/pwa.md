@@ -43,6 +43,22 @@ Generated at `/manifest.webmanifest` via Next.js built-in manifest route.
 - `public/icons/icon-192.svg` — 192×192, `maskable`
 - `public/icons/icon-512.svg` — 512×512, `any`
 
+**Shortcuts:**
+
+The manifest includes a `shortcuts` array with an "Add Expense" entry pointing to `/?action=add`. On Android Chrome and iOS 16.4+, long-pressing the home screen icon shows this as a quick action — no user setup required.
+
+---
+
+## Add Expense via URL Param (`/?action=add`)
+
+`Dashboard.tsx` reads `useSearchParams()` on load. If `action=add` is present and data has finished loading, it calls `fabRef.current?.open()` to open the Add Expense modal, then replaces the URL with `/` so the modal doesn't reopen on refresh.
+
+**Use cases:**
+
+- PWA manifest shortcut (long-press home screen icon → "Add Expense")
+- iOS Back Tap: Settings → Accessibility → Touch → Back Tap → Double Tap → Shortcuts → "Open URLs" → `https://<app-url>/?action=add`
+- Android Pixel Quick Tap: similar Shortcuts setup pointing to the same URL
+
 ---
 
 ## Notification System

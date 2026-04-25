@@ -47,29 +47,51 @@ Loads all Firestore data for the authenticated user. Only called from `DataProvi
 
 ---
 
-## useDashboard (`hooks/useDashboard.ts`)
+## useAddExpense (`hooks/useAddExpense.ts`)
 
-Manages all Dashboard state: expenses, filter, edit modal, derived stats, chart data.
+Manages the Add Expense form (used by `AddExpenseFAB`).
 
 **Returns:**
 
 ```typescript
 {
-  expenses: Expense[]
-  categories: Category[]
   spenders: Spender[]
-  selectedSpender: string | null
-  setSelectedSpender: (id: string | null) => void
-  filteredExpenses: Expense[]        // filtered by selectedSpender
-  totalAll: number                   // sum of all expenses
-  totalThisMonth: number
-  avgPerDay: number                  // this month total / days elapsed
-  editingExpense: Expense | null
-  setEditingExpense: (e: Expense | null) => void
-  handleEditSave: (updated: Expense) => void
-  handleDelete: (id: string) => void
-  chartData: { name: string; value: number; color: string }[]
-  columns: TableColumnsType<Expense>  // antd table columns with actions
+  addModalOpen: boolean
+  addForm: FormInstance
+  descriptionOptions: { value: string }[]  // autocomplete from previous expenses
+  categoryOptions: SelectOption[]
+  spenderOptions: SelectOption[]
+  setDescriptionInput: (v: string) => void
+  openAddModal: () => void
+  closeAddModal: () => void
+  handleAddSave: (values: AddFormValues) => void
+}
+```
+
+**Note:** `handleAddSave` captures the current time via `Date.now()` — there is no time picker in the form. The `date` field (YYYY-MM-DD) is user-selected; `time` (HH:mm) is auto-set on save.
+
+---
+
+## useDashboard (`hooks/useDashboard.ts`)
+
+Manages Dashboard state: filters, derived stats, chart data.
+
+**Returns:**
+
+```typescript
+{
+  spenders: Spender[]
+  selectedSpenderId: string | undefined   // single-select spender filter
+  setSelectedSpenderId: (id: string | undefined) => void
+  selectedMonth: Dayjs | null
+  setSelectedMonth: (m: Dayjs | null) => void
+  monthFilteredExpenses: Expense[]        // filtered by month + spender
+  monthTotal: number
+  topCat: { name: string; total: number } | null
+  allCategoryData: ChartData[]            // all categories with spend > 0, sorted desc
+  chartData: ChartData[]                  // top 5 categories (for donut chart)
+  dailyChartData: { day: number; total: number }[]  // all days in selected month
+  spenderOptions: SelectOption[]
 }
 ```
 
@@ -161,7 +183,7 @@ Manages budget configuration.
 }
 ```
 
-**Side effects:** All changes persist immediately to `em-budget` in localStorage.
+**Side effects:** All changes persist to Firestore via `useBudgetContext()` (`users/{uid}/settings.budget`).
 
 ---
 

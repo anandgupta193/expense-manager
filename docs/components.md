@@ -49,19 +49,33 @@ All components are `"use client"`. They render JSX only — all state and logic 
 
 ---
 
+## AddExpenseFAB (`components/AddExpenseFAB.tsx`)
+
+**Responsibility:** Floating action button that opens the Add Expense form (drawer on mobile, modal on desktop).
+
+**Hook:** `useAddExpense()`
+
+**Ref:** Exported as a `forwardRef` with type `AddExpenseFABRef { open(): void }`. Parent components can call `fabRef.current?.open()` to trigger the modal programmatically (used by Dashboard for `?action=add` URL param and by ExpenseTable's header button).
+
+**Form fields:** Description (with autocomplete), Amount, Date (date-only picker — time is auto-captured at save), Category, Spent By (optional), Notes (optional).
+
+---
+
 ## Dashboard (`components/Dashboard.tsx`)
 
-**Responsibility:** Main overview page. Displays totals, pie chart, per-category breakdown, and full expense table with edit/delete. Add expense is triggered from a floating action button on Dashboard (no separate `/add` route).
+**Responsibility:** Main overview page. Displays stat cards, daily spending chart, donut chart, per-category breakdown, and a floating add button.
 
-**Hook:** `useDashboard()`
+**Hooks:** `useDashboard()`, `useBudgetContext()`, `useAppData()`, `useSearchParams()`, `useRouter()`
 
 **Sections:**
 
-- Stat cards: Total Expenses (all time), This Month, Average per Day, Number of Transactions
-- Spender filter — dropdown to filter expense table and chart by spender
-- Pie chart (Recharts `PieChart`) — category breakdown, color-coded
-- Expense table (antd `Table`) — columns: Date, Description, Category, Amount, Spender, Actions
-- Add/Edit modal — inline form for adding a new expense or editing an existing one
+- Stat cards: This Month Total, Transaction Count, Top Category, Budget Remaining
+- Spender filter — single-select dropdown to filter all dashboard data by one spender
+- Month picker — select any past or current month
+- Daily spending line chart (Recharts `LineChart`) — total spend per day for the selected month; X-axis labels every 5 days
+- Donut chart (Recharts `PieChart`) — top 5 category breakdown
+- Category breakdown — ranked progress bars for all categories
+- `AddExpenseFAB` (with `ref`) — opened programmatically when `?action=add` is in the URL
 
 ---
 
@@ -125,7 +139,7 @@ Settings are persisted immediately to localStorage on change.
 - Enable/disable budget tracking toggle
 - Budget amount inputs per category (or a global monthly limit)
 
-Settings are persisted immediately to `em-budget` in localStorage on change.
+Settings are persisted to Firestore (`users/{uid}/settings.budget`) via `useBudgetContext()`.
 
 ---
 
