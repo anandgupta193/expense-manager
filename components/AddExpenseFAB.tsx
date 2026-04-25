@@ -108,12 +108,11 @@ const AddExpenseFAB = forwardRef<AddExpenseFABRef>(function AddExpenseFAB(_, ref
           open={addModalOpen}
           onClose={closeAddModal}
           styles={{ body: { paddingBottom: 32, overflowY: 'auto' }, wrapper: { height: 'auto', maxHeight: '90dvh' } }}
-          destroyOnHidden
         >
           {addExpenseFormJSX}
         </Drawer>
       ) : (
-        <Modal title="Add Expense" open={addModalOpen} onCancel={closeAddModal} footer={null} destroyOnHidden>
+        <Modal title="Add Expense" open={addModalOpen} onCancel={closeAddModal} footer={null}>
           {addExpenseFormJSX}
         </Modal>
       )}

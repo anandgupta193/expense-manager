@@ -209,12 +209,11 @@ export default function ExpenseTable() {
             open={modalOpen}
             onClose={closeEdit}
             styles={{ body: { paddingBottom: 32, overflowY: 'auto' }, wrapper: { height: 'auto', maxHeight: '90dvh' } }}
-            destroyOnHidden
           >
             {editExpenseFormJSX}
           </Drawer>
         ) : (
-          <Modal title="Edit Expense" open={modalOpen} onCancel={closeEdit} footer={null} destroyOnHidden>
+          <Modal title="Edit Expense" open={modalOpen} onCancel={closeEdit} footer={null}>
             {editExpenseFormJSX}
           </Modal>
         )

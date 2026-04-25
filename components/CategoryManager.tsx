@@ -183,7 +183,7 @@ export default function CategoryManager() {
       </div>
 
       {/* Edit modal */}
-      <Modal title="Edit Category" open={modalOpen} onCancel={closeEdit} footer={null} destroyOnHidden>
+      <Modal title="Edit Category" open={modalOpen} onCancel={closeEdit} footer={null}>
         <Form form={editForm} layout="vertical" onFinish={handleEditSave} className="pt-4">
           <div className="flex gap-4 items-end">
             <Form.Item label="Name" name="name" className="flex-1" rules={[requiredRule('Enter a name')]}>
