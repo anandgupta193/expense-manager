@@ -31,8 +31,8 @@ export default function ExpenseTable() {
   const fabRef = useRef<AddExpenseFABRef>(null)
   const {
     spenders,
-    selectedSpenderIds,
-    setSelectedSpenderIds,
+    selectedSpenderId,
+    setSelectedSpenderId,
     selectedCategoryId,
     setSelectedCategoryId,
     selectedMonth,
@@ -70,12 +70,11 @@ export default function ExpenseTable() {
           />
           {spenders.length > 0 && (
             <Select
-              mode="multiple"
               allowClear
               placeholder="All spenders"
               options={spenderOptions}
-              value={selectedSpenderIds}
-              onChange={setSelectedSpenderIds}
+              value={selectedSpenderId}
+              onChange={(v) => setSelectedSpenderId(v ?? undefined)}
               style={{ minWidth: 120 }}
             />
           )}

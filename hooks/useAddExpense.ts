@@ -35,10 +35,11 @@ export function useAddExpense() {
   }
 
   function handleAddSave(values: AddFormValues) {
+    const now = new Date(Date.now())
     const newExpense: Expense = {
       id: crypto.randomUUID(),
       date: values.date.format('YYYY-MM-DD'),
-      time: values.date.format('HH:mm'),
+      time: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
       description: values.description.trim(),
       amount: values.amount,
       categoryId: values.categoryId,

@@ -24,5 +24,13 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       },
     ],
+    shortcuts: [
+      {
+        name: 'Add Expense',
+        short_name: 'Add',
+        url: '/?action=add',
+        icons: [{ src: '/icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' }],
+      },
+    ],
   }
 }

@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import dayjs from 'dayjs'
 import { DatePicker, Empty, Progress, Select, Typography, theme, Tag } from 'antd'
 import { RiseOutlined, FallOutlined, CalendarOutlined } from '@ant-design/icons'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { useDashboard } from '@/hooks/useDashboard'
 import { formatINR } from '@/utils/formatters'
-import { useBudgetContext } from '@/app/providers'
-import AddExpenseFAB from '@/components/AddExpenseFAB'
+import { useBudgetContext, useAppData } from '@/app/providers'
+import AddExpenseFAB, { type AddExpenseFABRef } from '@/components/AddExpenseFAB'
 
 const { Title, Text } = Typography
 
@@ -150,10 +151,21 @@ function BudgetStatCard({
 export default function Dashboard() {
   const { token } = theme.useToken()
   const { budget } = useBudgetContext()
+  const { dataLoading } = useAppData()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const fabRef = useRef<AddExpenseFABRef>(null)
+
+  useEffect(() => {
+    if (!dataLoading && searchParams.get('action') === 'add') {
+      fabRef.current?.open()
+      router.replace('/')
+    }
+  }, [dataLoading, searchParams, router])
   const {
     spenders,
-    selectedSpenderIds,
-    setSelectedSpenderIds,
+    selectedSpenderId,
+    setSelectedSpenderId,
     selectedMonth,
     setSelectedMonth,
     monthFilteredExpenses,
@@ -201,12 +213,11 @@ export default function Dashboard() {
           {/* Desktop: spenders select */}
           {spenders.length > 0 && (
             <Select
-              mode="multiple"
               allowClear
               placeholder="All spenders"
               options={spenderOptions}
-              value={selectedSpenderIds}
-              onChange={setSelectedSpenderIds}
+              value={selectedSpenderId}
+              onChange={(v) => setSelectedSpenderId(v ?? undefined)}
               style={{ minWidth: 120 }}
             />
           )}
@@ -416,7 +427,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <AddExpenseFAB />
+      <AddExpenseFAB ref={fabRef} />
     </div>
   )
 }

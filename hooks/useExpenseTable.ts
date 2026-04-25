@@ -26,7 +26,7 @@ interface EditFormValues {
 export function useExpenseTable() {
   const { token } = theme.useToken()
   const { expenses, categories, spenders, setExpenses } = useAppData()
-  const [selectedSpenderIds, setSelectedSpenderIds] = useState<string[]>([])
+  const [selectedSpenderId, setSelectedSpenderId] = useState<string | undefined>(undefined)
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(dayjs())
   const [editTarget, setEditTarget] = useState<Expense | null>(null)
@@ -38,9 +38,7 @@ export function useExpenseTable() {
   const spenderMap = Object.fromEntries(spenders.map((s) => [s.id, s]))
 
   const filteredExpenses =
-    selectedSpenderIds.length === 0
-      ? expenses
-      : expenses.filter((e) => e.spenderId && selectedSpenderIds.includes(e.spenderId))
+    selectedSpenderId === undefined ? expenses : expenses.filter((e) => e.spenderId === selectedSpenderId)
 
   const categoryFilteredExpenses =
     selectedCategoryId === null ? filteredExpenses : filteredExpenses.filter((e) => e.categoryId === selectedCategoryId)
@@ -115,8 +113,8 @@ export function useExpenseTable() {
 
   return {
     spenders,
-    selectedSpenderIds,
-    setSelectedSpenderIds,
+    selectedSpenderId,
+    setSelectedSpenderId,
     selectedCategoryId,
     setSelectedCategoryId,
     selectedMonth,

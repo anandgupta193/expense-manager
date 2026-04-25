@@ -15,13 +15,11 @@ export interface ChartData {
 
 export function useDashboard() {
   const { expenses, categories, spenders } = useAppData()
-  const [selectedSpenderIds, setSelectedSpenderIds] = useState<string[]>([])
+  const [selectedSpenderId, setSelectedSpenderId] = useState<string | undefined>(undefined)
   const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(dayjs())
 
   const filteredExpenses =
-    selectedSpenderIds.length === 0
-      ? expenses
-      : expenses.filter((e) => e.spenderId && selectedSpenderIds.includes(e.spenderId))
+    selectedSpenderId === undefined ? expenses : expenses.filter((e) => e.spenderId === selectedSpenderId)
 
   const monthFilteredExpenses =
     selectedMonth === null
@@ -56,8 +54,8 @@ export function useDashboard() {
 
   return {
     spenders,
-    selectedSpenderIds,
-    setSelectedSpenderIds,
+    selectedSpenderId,
+    setSelectedSpenderId,
     selectedMonth,
     setSelectedMonth,
     monthFilteredExpenses,
