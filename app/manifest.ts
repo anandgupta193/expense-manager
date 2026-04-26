@@ -6,6 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'Expenses',
     description: 'Track and manage your daily expenses',
     start_url: '/',
+    scope: '/',
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#f9fafb',

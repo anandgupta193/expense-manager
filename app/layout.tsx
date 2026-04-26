@@ -18,6 +18,9 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'Expense Manager',
   },
+  icons: {
+    apple: '/icons/icon-192.png',
+  },
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

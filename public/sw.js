@@ -1,4 +1,4 @@
-const CACHE_NAME = 'em-v1'
+const CACHE_NAME = 'em-v2'
 const STATIC_URLS = ['/', '/add', '/categories', '/settings', '/offline']
 
 self.addEventListener('install', (event) => {
