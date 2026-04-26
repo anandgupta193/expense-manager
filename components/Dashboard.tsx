@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dayjs from 'dayjs'
 import { DatePicker, Empty, Progress, Select, Typography, theme, Tag } from 'antd'
@@ -166,6 +166,7 @@ export default function Dashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const fabRef = useRef<AddExpenseFABRef>(null)
+  const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!dataLoading && searchParams.get('action') === 'add') {
@@ -292,7 +293,16 @@ export default function Dashboard() {
         </Text>
         <div className="mt-3">
           <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={dailyChartData} margin={{ top: 8, right: 12, left: 12, bottom: 0 }}>
+            <LineChart
+              data={dailyChartData}
+              margin={{ top: 8, right: 12, left: 12, bottom: 0 }}
+              onClick={(data) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const date = (data as any)?.activePayload?.[0]?.payload?.date as string | undefined
+                if (date) router.push(`/expenses?date=${date}`)
+              }}
+              style={{ cursor: 'pointer' }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke={token.colorBorderSecondary} vertical={false} />
               <XAxis
                 dataKey="day"
@@ -433,7 +443,23 @@ export default function Dashboard() {
                   .map((item) => {
                     const pct = monthTotal > 0 ? (item.value / monthTotal) * 100 : 0
                     return (
-                      <div key={item.name}>
+                      <div
+                        key={item.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => router.push(`/expenses?category=${item.id}`)}
+                        onKeyDown={(e) => e.key === 'Enter' && router.push(`/expenses?category=${item.id}`)}
+                        onMouseEnter={() => setHoveredCategoryId(item.id)}
+                        onMouseLeave={() => setHoveredCategoryId(null)}
+                        style={{
+                          cursor: 'pointer',
+                          borderRadius: 8,
+                          margin: '0 -8px',
+                          padding: '4px 8px',
+                          background: hoveredCategoryId === item.id ? token.colorFillTertiary : 'transparent',
+                          transition: 'background 0.15s ease',
+                        }}
+                      >
                         <div className="flex justify-between items-center mb-2">
                           <div className="flex items-center gap-2.5">
                             <span

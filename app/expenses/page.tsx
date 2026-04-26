@@ -1,5 +1,10 @@
+import { Suspense } from 'react'
 import ExpenseTable from '@/components/ExpenseTable'
 
 export default function ExpensesPage() {
-  return <ExpenseTable />
+  return (
+    <Suspense>
+      <ExpenseTable />
+    </Suspense>
+  )
 }

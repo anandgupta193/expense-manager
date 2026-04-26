@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Form, theme } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -26,9 +27,17 @@ interface EditFormValues {
 export function useExpenseTable() {
   const { token } = theme.useToken()
   const { expenses, categories, spenders, setExpenses } = useAppData()
+  const searchParams = useSearchParams()
+
+  const dateParam = searchParams.get('date')
+  const monthParam = searchParams.get('month')
+  const initialDay: Dayjs | null = dateParam ? dayjs(dateParam, 'YYYY-MM-DD') : null
+  const initialMonth: Dayjs | null = dateParam ? null : monthParam ? dayjs(monthParam, 'YYYY-MM') : dayjs()
+
   const [selectedSpenderId, setSelectedSpenderId] = useState<string | undefined>(undefined)
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
-  const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(dayjs())
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(searchParams.get('category'))
+  const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(initialMonth)
+  const [selectedDay, setSelectedDay] = useState<Dayjs | null>(initialDay)
   const [editTarget, setEditTarget] = useState<Expense | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [descriptionInput, setDescriptionInput] = useState('')
@@ -51,9 +60,24 @@ export function useExpenseTable() {
           return d.month() === selectedMonth.month() && d.year() === selectedMonth.year()
         })
 
+  const dayFilteredExpenses =
+    selectedDay === null
+      ? monthFilteredExpenses
+      : monthFilteredExpenses.filter((e) => e.date === selectedDay.format('YYYY-MM-DD'))
+
+  function handleMonthChange(v: Dayjs | null) {
+    setSelectedMonth(v)
+    if (v !== null) setSelectedDay(null)
+  }
+
+  function handleDayChange(v: Dayjs | null) {
+    setSelectedDay(v)
+    if (v !== null) setSelectedMonth(null)
+  }
+
   function handleExportCSV() {
-    const filename = selectedMonth ? `expenses-${selectedMonth.format('YYYY-MM')}.csv` : 'expenses-all.csv'
-    exportExpensesToCSV(monthFilteredExpenses, catMap, spenderMap, filename)
+    const label = selectedDay ? selectedDay.format('YYYY-MM-DD') : (selectedMonth?.format('YYYY-MM') ?? 'all')
+    exportExpensesToCSV(dayFilteredExpenses, catMap, spenderMap, `expenses-${label}.csv`)
   }
 
   function openEdit(expense: Expense) {
@@ -118,10 +142,12 @@ export function useExpenseTable() {
     selectedCategoryId,
     setSelectedCategoryId,
     selectedMonth,
-    setSelectedMonth,
+    handleMonthChange,
+    selectedDay,
+    handleDayChange,
     modalOpen,
     form,
-    monthFilteredExpenses,
+    monthFilteredExpenses: dayFilteredExpenses,
     columns,
     categoryOptions,
     spenderOptions,

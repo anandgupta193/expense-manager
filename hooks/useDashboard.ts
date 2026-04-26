@@ -7,6 +7,7 @@ import { useAppData } from '@/app/providers'
 import { buildSpenderOptions } from '@/utils/expenseUtils'
 
 export interface ChartData {
+  id: string
   name: string
   value: number
   color: string
@@ -40,6 +41,7 @@ export function useDashboard() {
 
   const allCategoryData: ChartData[] = categories
     .map((c) => ({
+      id: c.id,
       name: c.name,
       value: monthFilteredExpenses.filter((e) => e.categoryId === c.id).reduce((s, e) => s + e.amount, 0),
       color: c.color,
@@ -60,7 +62,7 @@ export function useDashboard() {
     return Array.from({ length: daysInMonth }, (_, i) => {
       const day = i + 1
       const dateKey = selectedMonth.date(day).format('YYYY-MM-DD')
-      return { day, total: totals[dateKey] ?? 0 }
+      return { day, total: totals[dateKey] ?? 0, date: dateKey }
     })
   })()
 

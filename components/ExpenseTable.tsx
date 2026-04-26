@@ -36,7 +36,9 @@ export default function ExpenseTable() {
     selectedCategoryId,
     setSelectedCategoryId,
     selectedMonth,
-    setSelectedMonth,
+    handleMonthChange,
+    selectedDay,
+    handleDayChange,
     modalOpen,
     form,
     monthFilteredExpenses,
@@ -79,9 +81,19 @@ export default function ExpenseTable() {
             />
           )}
           <DatePicker
+            value={selectedDay}
+            onChange={(v) => handleDayChange(v)}
+            allowClear
+            format="DD MMM YYYY"
+            inputReadOnly
+            placeholder="Filter by day"
+            disabledDate={selectedMonth ? (d) => !d.isSame(selectedMonth, 'month') : undefined}
+            defaultPickerValue={selectedMonth ?? undefined}
+          />
+          <DatePicker
             picker="month"
             value={selectedMonth}
-            onChange={(v) => setSelectedMonth(v)}
+            onChange={(v) => handleMonthChange(v)}
             allowClear
             format="MMM YYYY"
             inputReadOnly
@@ -108,7 +120,11 @@ export default function ExpenseTable() {
           style={{ borderBottom: `1px solid ${token.colorBorderSecondary}` }}
         >
           <Text strong style={{ fontSize: 14, fontWeight: 600 }}>
-            {selectedMonth ? `${selectedMonth.format('MMMM YYYY')} Expenses` : 'All Expenses'}
+            {selectedDay
+              ? `${selectedDay.format('D MMMM YYYY')} Expenses`
+              : selectedMonth
+                ? `${selectedMonth.format('MMMM YYYY')} Expenses`
+                : 'All Expenses'}
           </Text>
           <div className="flex items-center gap-3">
             <Text type="secondary" style={{ fontSize: 12 }}>
