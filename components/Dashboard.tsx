@@ -293,16 +293,7 @@ export default function Dashboard() {
         </Text>
         <div className="mt-3">
           <ResponsiveContainer width="100%" height={180}>
-            <LineChart
-              data={dailyChartData}
-              margin={{ top: 8, right: 12, left: 12, bottom: 0 }}
-              onClick={(data) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const date = (data as any)?.activePayload?.[0]?.payload?.date as string | undefined
-                if (date) router.push(`/expenses?date=${date}`)
-              }}
-              style={{ cursor: 'pointer' }}
-            >
+            <LineChart data={dailyChartData} margin={{ top: 8, right: 12, left: 12, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={token.colorBorderSecondary} vertical={false} />
               <XAxis
                 dataKey="day"
