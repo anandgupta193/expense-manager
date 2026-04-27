@@ -31,3 +31,19 @@ export interface ReminderConfig {
 export interface BudgetConfig {
   monthlyLimit: number | null // null = not set
 }
+
+export interface SpendingAnalysis {
+  period: string
+  categoryBreakdown: Array<{ name: string; amount: number; pct: number }>
+  insights: string[]
+  flags: string[]
+  recommendations: string[]
+  nextMonthGoals: string[]
+}
+
+export interface LocalSummary {
+  totalSpent: number
+  transactions: number
+  avgDailySpend: number
+  activeDays: number
+}
