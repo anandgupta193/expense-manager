@@ -1,5 +1,5 @@
-const CACHE_NAME = 'em-v2'
-const STATIC_URLS = ['/', '/add', '/categories', '/settings', '/offline']
+const CACHE_NAME = 'em-v3'
+const STATIC_URLS = ['/', '/dashboard', '/categories', '/settings', '/offline']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_URLS)))

@@ -41,7 +41,7 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: 'Add Expense',
         short_name: 'Add',
-        url: '/?action=add',
+        url: '/dashboard?action=add',
         icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
       },
     ],
