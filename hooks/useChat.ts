@@ -43,6 +43,9 @@ export interface UiMessage {
 // Palette for auto-coloring newly-created categories.
 const NEW_CATEGORY_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899']
 
+// If no data arrives from the assistant for this long, treat it as "not responding".
+const RESPONSE_TIMEOUT_MS = 30_000
+
 function monthRange(now: Date): DateRange {
   const y = now.getFullYear()
   const m = now.getMonth()
@@ -84,11 +87,28 @@ export function useChat() {
       if (!user) return
       const token = await user.getIdToken()
       const snapshot = buildSnapshot(range)
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ messages: wire, snapshot } satisfies ChatRequest),
-      })
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), RESPONSE_TIMEOUT_MS)
+      let res: Response
+      try {
+        res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ messages: wire, snapshot } satisfies ChatRequest),
+          signal: controller.signal,
+        })
+      } catch (err) {
+        const timedOut = err instanceof DOMException && err.name === 'AbortError'
+        patchMessage(assistantIdx, (m) => ({
+          ...m,
+          streaming: false,
+          error: true,
+          content: timedOut ? 'The assistant did not respond in time. Please try again.' : 'Request failed.',
+        }))
+        return
+      } finally {
+        clearTimeout(timeout)
+      }
       if (!res.ok || !res.body) {
         patchMessage(assistantIdx, (m) => ({
           ...m,
@@ -104,40 +124,60 @@ export function useChat() {
       const parse = createSSEParser()
       const autoApply: AgentAction[] = []
       let expansion: DateRange | null = null
+      let sawOutput = false
+      // Reset the "not responding" deadline every time a chunk actually arrives.
+      let idleTimeout = setTimeout(() => controller.abort(), RESPONSE_TIMEOUT_MS)
 
-      for (;;) {
-        const { value, done } = await reader.read()
-        if (done) break
-        for (const ev of parse(decoder.decode(value, { stream: true }))) {
-          if (ev.type === 'text-delta') {
-            patchMessage(assistantIdx, (m) => ({ ...m, content: m.content + ev.delta }))
-          } else if (ev.type === 'action') {
-            if (isDestructive(ev.action)) {
+      try {
+        for (;;) {
+          const { value, done } = await reader.read()
+          if (done) break
+          clearTimeout(idleTimeout)
+          idleTimeout = setTimeout(() => controller.abort(), RESPONSE_TIMEOUT_MS)
+          for (const ev of parse(decoder.decode(value, { stream: true }))) {
+            sawOutput = true
+            if (ev.type === 'text-delta') {
+              patchMessage(assistantIdx, (m) => ({ ...m, content: m.content + ev.delta }))
+            } else if (ev.type === 'action') {
+              if (isDestructive(ev.action)) {
+                patchMessage(assistantIdx, (m) => ({
+                  ...m,
+                  actionItems: [...(m.actionItems ?? []), { action: ev.action, status: 'pending' }],
+                }))
+              } else {
+                autoApply.push(ev.action)
+                patchMessage(assistantIdx, (m) => ({
+                  ...m,
+                  actionItems: [...(m.actionItems ?? []), { action: ev.action, status: 'applied' }],
+                }))
+              }
+            } else if (ev.type === 'card') {
+              patchMessage(assistantIdx, (m) => ({ ...m, cards: [...(m.cards ?? []), ev.card] }))
+            } else if (ev.type === 'choose_category') {
               patchMessage(assistantIdx, (m) => ({
                 ...m,
-                actionItems: [...(m.actionItems ?? []), { action: ev.action, status: 'pending' }],
+                pendingCategory: { prompt: ev.prompt, pending: ev.pending, status: 'open' },
               }))
-            } else {
-              autoApply.push(ev.action)
-              patchMessage(assistantIdx, (m) => ({
-                ...m,
-                actionItems: [...(m.actionItems ?? []), { action: ev.action, status: 'applied' }],
-              }))
+            } else if (ev.type === 'need_data') {
+              expansion = ev.range
+            } else if (ev.type === 'error') {
+              patchMessage(assistantIdx, (m) => ({ ...m, error: true, content: m.content || ev.message }))
             }
-          } else if (ev.type === 'card') {
-            patchMessage(assistantIdx, (m) => ({ ...m, cards: [...(m.cards ?? []), ev.card] }))
-          } else if (ev.type === 'choose_category') {
-            patchMessage(assistantIdx, (m) => ({
-              ...m,
-              pendingCategory: { prompt: ev.prompt, pending: ev.pending, status: 'open' },
-            }))
-          } else if (ev.type === 'need_data') {
-            expansion = ev.range
-          } else if (ev.type === 'error') {
-            patchMessage(assistantIdx, (m) => ({ ...m, error: true, content: m.content || ev.message }))
+            // 'done' handled implicitly by stream end
           }
-          // 'done' handled implicitly by stream end
         }
+      } catch (err) {
+        const timedOut = err instanceof DOMException && err.name === 'AbortError'
+        patchMessage(assistantIdx, (m) => ({
+          ...m,
+          streaming: false,
+          error: true,
+          content:
+            m.content || (timedOut ? 'The assistant did not respond in time. Please try again.' : 'Request failed.'),
+        }))
+        return
+      } finally {
+        clearTimeout(idleTimeout)
       }
 
       // On-demand expansion: re-run this turn once with a wider window.
@@ -151,7 +191,13 @@ export function useChat() {
       }
 
       if (autoApply.length) applyActions(autoApply, ctxRef.current)
-      patchMessage(assistantIdx, (m) => ({ ...m, streaming: false }))
+      // Stream ended cleanly but produced nothing at all — the assistant never actually responded.
+      patchMessage(assistantIdx, (m) => {
+        const hasOutput = sawOutput || m.content || m.actionItems?.length || m.cards?.length || m.pendingCategory
+        return hasOutput
+          ? { ...m, streaming: false }
+          : { ...m, streaming: false, error: true, content: 'The assistant did not respond. Please try again.' }
+      })
     },
     [user, buildSnapshot, patchMessage]
   )

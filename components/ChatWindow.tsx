@@ -32,9 +32,9 @@ export default function ChatWindow() {
   const isEmpty = messages.length === 0
 
   return (
-    <div className="flex flex-col mx-auto w-full max-w-3xl px-4" style={{ height: 'calc(100dvh - 8rem)' }}>
+    <div className="flex flex-col mx-auto w-full max-w-3xl px-4 h-[calc(100dvh-12rem)] md:h-[calc(100dvh-8rem)] overflow-hidden">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-3">
+      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-4 flex flex-col gap-3">
         {isEmpty ? (
           <div className="flex flex-1 flex-col items-center justify-center text-center gap-3">
             <RobotOutlined style={{ fontSize: 40, color: token.colorPrimary }} />
@@ -76,7 +76,7 @@ export default function ChatWindow() {
 
       {/* Composer */}
       <div className="pb-4 pt-2">
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 -mx-1 px-1">
           {QUICK_ACTIONS.map((qa) => (
             <Tag
               key={qa.label}
@@ -107,7 +107,6 @@ export default function ChatWindow() {
             }}
             placeholder="Message your assistant…"
             autoSize={{ minRows: 1, maxRows: 4 }}
-            disabled={busy}
           />
           <Button
             type="primary"
