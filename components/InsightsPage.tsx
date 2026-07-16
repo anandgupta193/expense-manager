@@ -282,7 +282,7 @@ export default function InsightsPage() {
     })
 
     if (filtered.length === 0) {
-      router.replace('/')
+      router.replace('/dashboard')
       return
     }
 

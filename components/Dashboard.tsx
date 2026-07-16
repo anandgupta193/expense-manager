@@ -175,7 +175,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!dataLoading && searchParams.get('action') === 'add') {
       fabRef.current?.open()
-      router.replace('/')
+      router.replace('/dashboard')
     }
   }, [dataLoading, searchParams, router])
   const {

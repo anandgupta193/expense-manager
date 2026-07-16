@@ -65,7 +65,9 @@ Expenses, categories, spenders, and budget config live in **Firestore** (`users/
 Each page file is a minimal server component that imports a single `"use client"` component:
 
 ```
-app/page.tsx              → components/Dashboard.tsx
+app/page.tsx              → components/ChatWindow.tsx        (agentic chat — landing page)
+app/dashboard/page.tsx    → components/Dashboard.tsx
+app/chat/page.tsx         → redirect('/')                   (chat moved to root)
 app/categories/page.tsx   → components/CategoryManager.tsx
 app/spenders/page.tsx     → components/SpenderManager.tsx
 app/settings/page.tsx     → components/ReminderSettings.tsx + BudgetSettings.tsx
@@ -86,7 +88,7 @@ Copy `.env.local.example` to `.env.local` and fill in Firebase project values (`
 - `app/manifest.ts` — Next.js built-in manifest route (`/manifest.webmanifest`); includes a `shortcuts` array so long-pressing the home screen icon shows an "Add Expense" quick action on Android and iOS 16.4+
 - `public/sw.js` — network-first service worker with fallback to cache
 - Icons at `public/icons/icon-192.svg` and `icon-512.svg`
-- `/?action=add` — navigating to the dashboard with this query param auto-opens the Add Expense modal (modal opens after data loads, then URL is replaced with `/`). Used by iOS Back Tap / Android shortcuts.
+- `/dashboard?action=add` — navigating to the dashboard with this query param auto-opens the Add Expense modal (modal opens after data loads, then URL is replaced with `/dashboard`). Used by iOS Back Tap / Android shortcuts.
 
 ### Styling conventions
 
