@@ -1,0 +1,23 @@
+# code-crafter per-repo contract.
+# Read by the code-crafter agent container at boot to build this repo's environment
+# and decide agent/PR behaviour. See the code-crafter docs (05-agent-runtime.md).
+system:
+  setup:
+    volta:
+      enabled: true
+      node: '24'
+    command: 'npm'
+    args: ['ci']
+
+codecrafter:
+  agent:
+    provider: claude
+    model: sonnet
+    fallback: [sonnet, haiku]
+  pull_request:
+    draft: true
+  commands:
+    lint: 'npm run lint'
+    format: 'npm run format:check'
+    typecheck: 'npx tsc --noEmit'
+    build: 'npm run build'
