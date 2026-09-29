@@ -1,0 +1,42 @@
+ui:
+  - components/**/*
+  - app/**/*.tsx
+  - app/**/*.css
+
+hooks:
+  - hooks/**/*
+
+data-layer:
+  - lib/**/*
+  - firestore.rules
+  - firestore.indexes.json
+  - firebase.json
+
+config:
+  - config/**/*
+  - constants/**/*
+  - next.config.ts
+  - tsconfig.json
+  - eslint.config.mjs
+  - postcss.config.mjs
+  - .prettierrc
+  - .nvmrc
+
+utils:
+  - utils/**/*
+
+pwa:
+  - public/**/*
+  - app/manifest.ts
+
+dependencies:
+  - package.json
+  - package-lock.json
+
+documentation:
+  - '**/*.md'
+  - docs/**/*
+
+ci:
+  - .github/**/*
+  - .husky/**/*
