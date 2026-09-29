@@ -6,6 +6,8 @@ import { applyActions, type ApplyContext } from '@/lib/agent/actions'
 import { createSSEParser } from '@/lib/sse'
 import { consumeChat } from '@/lib/chatQuota'
 import { DAILY_CHAT_LIMIT } from '@/constants/chat'
+import { NEW_CATEGORY_COLORS } from '@/constants/colors'
+import { monthRange } from '@/utils/dateHelpers'
 import { isDestructive } from '@/lib/types'
 import type {
   AgentAction,
@@ -40,19 +42,8 @@ export interface UiMessage {
   error?: boolean
 }
 
-// Palette for auto-coloring newly-created categories.
-const NEW_CATEGORY_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899']
-
 // If no data arrives from the assistant for this long, treat it as "not responding".
 const RESPONSE_TIMEOUT_MS = 30_000
-
-function monthRange(now: Date): DateRange {
-  const y = now.getFullYear()
-  const m = now.getMonth()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  const last = new Date(y, m + 1, 0).getDate()
-  return { from: `${y}-${pad(m + 1)}-01`, to: `${y}-${pad(m + 1)}-${pad(last)}` }
-}
 
 export function useChat() {
   const { expenses, categories, spenders, setExpenses, setCategories, setSpenders } = useAppData()
