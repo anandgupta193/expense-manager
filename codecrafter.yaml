@@ -12,8 +12,9 @@ system:
 codecrafter:
   agent:
     provider: claude
-    model: sonnet
-    fallback: [sonnet, haiku]
+    model: haiku # pipeline testing; override per ticket with Jira label model:sonnet / model:opus
+    fallback: []
+    on_usage_limit: pause # checkpoint, post reset time, exit — never downgrade mid-ticket
   pull_request:
     draft: true
   commands:
