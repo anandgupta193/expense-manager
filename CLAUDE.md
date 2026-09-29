@@ -8,10 +8,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev      # Start dev server at http://localhost:3000
 npm run build    # Production build (also runs TypeScript type check)
 npm run lint     # ESLint
+npm run format:check  # Prettier check (CI fails on unformatted files)
 npm run start    # Serve production build
 ```
 
 There are no tests yet. TypeScript errors surface during `npm run build`.
+
+CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck and build on every PR and push to `main`.
 
 ## Architecture
 
