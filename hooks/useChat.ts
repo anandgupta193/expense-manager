@@ -5,7 +5,7 @@ import { useAppData, useBudgetContext, useAuthContext } from '@/app/providers'
 import { applyActions, type ApplyContext } from '@/lib/agent/actions'
 import { createSSEParser } from '@/lib/sse'
 import { consumeChat } from '@/lib/chatQuota'
-import { DAILY_CHAT_LIMIT } from '@/constants/chat'
+import { DAILY_CHAT_LIMIT, ERROR_MESSAGES } from '@/constants/chat'
 import { NEW_CATEGORY_COLORS } from '@/constants/colors'
 import { monthRange } from '@/utils/dateHelpers'
 import { isDestructive } from '@/lib/types'
@@ -60,6 +60,7 @@ export function useChat() {
   messagesRef.current = messages
   const ctxRef = useRef<ApplyContext>(null as unknown as ApplyContext)
   ctxRef.current = { expenses, categories, spenders, setExpenses, setCategories, setSpenders, setBudget }
+  const lastUserMessageRef = useRef<string>('')
 
   const buildSnapshot = useCallback(
     (range: DateRange): ChatSnapshot => {
@@ -94,7 +95,7 @@ export function useChat() {
           ...m,
           streaming: false,
           error: true,
-          content: timedOut ? 'The assistant did not respond in time. Please try again.' : 'Request failed.',
+          content: timedOut ? ERROR_MESSAGES.TIMEOUT : ERROR_MESSAGES.NETWORK_ERROR,
         }))
         return
       } finally {
@@ -105,7 +106,7 @@ export function useChat() {
           ...m,
           streaming: false,
           error: true,
-          content: m.content || 'Request failed.',
+          content: m.content || ERROR_MESSAGES.NETWORK_ERROR,
         }))
         return
       }
@@ -163,8 +164,7 @@ export function useChat() {
           ...m,
           streaming: false,
           error: true,
-          content:
-            m.content || (timedOut ? 'The assistant did not respond in time. Please try again.' : 'Request failed.'),
+          content: m.content || (timedOut ? ERROR_MESSAGES.TIMEOUT : ERROR_MESSAGES.NETWORK_ERROR),
         }))
         return
       } finally {
@@ -187,7 +187,7 @@ export function useChat() {
         const hasOutput = sawOutput || m.content || m.actionItems?.length || m.cards?.length || m.pendingCategory
         return hasOutput
           ? { ...m, streaming: false }
-          : { ...m, streaming: false, error: true, content: 'The assistant did not respond. Please try again.' }
+          : { ...m, streaming: false, error: true, content: ERROR_MESSAGES.EMPTY_RESPONSE }
       })
     },
     [user, buildSnapshot, patchMessage]
@@ -203,6 +203,7 @@ export function useChat() {
       }
       setError(null)
       setBusy(true)
+      lastUserMessageRef.current = trimmed
 
       const prevLen = messagesRef.current.length
       const userMsg: UiMessage = { role: 'user', content: trimmed }
@@ -222,7 +223,7 @@ export function useChat() {
       try {
         await runTurn(prevLen + 1, wire, monthRange(new Date()), 0)
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Something went wrong.'
+        const msg = err instanceof Error ? err.message : ERROR_MESSAGES.GENERIC_ERROR
         patchMessage(prevLen + 1, (m) => ({ ...m, streaming: false, error: true, content: m.content || msg }))
       } finally {
         setBusy(false)
@@ -304,11 +305,18 @@ export function useChat() {
     if (!user) setMessages([])
   }, [user])
 
+  const retry = useCallback(() => {
+    if (lastUserMessageRef.current) {
+      void send(lastUserMessageRef.current)
+    }
+  }, [send])
+
   return {
     messages,
     busy,
     error,
     send,
+    retry,
     confirmAction,
     cancelAction,
     resolvePendingCategory,

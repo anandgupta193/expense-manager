@@ -12,8 +12,17 @@ import CategoryChoiceCard from '@/components/chat/CategoryChoiceCard'
 
 export default function ChatWindow() {
   const { token } = theme.useToken()
-  const { messages, busy, error, send, confirmAction, cancelAction, resolvePendingCategory, createCategoryAndResolve } =
-    useChat()
+  const {
+    messages,
+    busy,
+    error,
+    send,
+    retry,
+    confirmAction,
+    cancelAction,
+    resolvePendingCategory,
+    createCategoryAndResolve,
+  } = useChat()
   const { categories, spenders, expenses } = useAppData()
   const [input, setInput] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
@@ -47,7 +56,7 @@ export default function ChatWindow() {
           </div>
         ) : (
           messages.map((m, mi) => (
-            <MessageBubble key={mi} message={m}>
+            <MessageBubble key={mi} message={m} onRetry={retry} retryDisabled={busy}>
               {m.actionItems?.map((item, ii) => (
                 <ChatActionCard
                   key={ii}
