@@ -145,7 +145,7 @@ export default function ExpenseTable() {
         </div>
         <div className="px-4 py-3 border-b" style={{ borderColor: token.colorBorderSecondary }}>
           <Input
-            placeholder="Search description or notes"
+            placeholder="Search expenses"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             allowClear
