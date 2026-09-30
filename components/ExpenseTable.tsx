@@ -39,6 +39,8 @@ export default function ExpenseTable() {
     handleMonthChange,
     selectedDay,
     handleDayChange,
+    searchQuery,
+    setSearchQuery,
     modalOpen,
     form,
     monthFilteredExpenses,
@@ -140,6 +142,16 @@ export default function ExpenseTable() {
               Export CSV
             </Button>
           </div>
+        </div>
+        <div className="px-4 py-3 border-b" style={{ borderColor: token.colorBorderSecondary }}>
+          <Input
+            placeholder="Search description or notes"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            allowClear
+            size="large"
+            className="max-w-xs"
+          />
         </div>
         <div className="p-4">
           <Table
