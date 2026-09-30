@@ -38,6 +38,7 @@ export function useExpenseTable() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(searchParams.get('category'))
   const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(initialMonth)
   const [selectedDay, setSelectedDay] = useState<Dayjs | null>(initialDay)
+  const [searchQuery, setSearchQuery] = useState('')
   const [editTarget, setEditTarget] = useState<Expense | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [descriptionInput, setDescriptionInput] = useState('')
@@ -64,6 +65,14 @@ export function useExpenseTable() {
     selectedDay === null
       ? monthFilteredExpenses
       : monthFilteredExpenses.filter((e) => e.date === selectedDay.format('YYYY-MM-DD'))
+
+  const searchFilteredExpenses =
+    searchQuery.trim() === ''
+      ? dayFilteredExpenses
+      : dayFilteredExpenses.filter((e) => {
+          const query = searchQuery.toLowerCase()
+          return e.description.toLowerCase().includes(query) || (e.notes?.toLowerCase().includes(query) ?? false)
+        })
 
   function handleMonthChange(v: Dayjs | null) {
     setSelectedMonth(v)
@@ -145,9 +154,11 @@ export function useExpenseTable() {
     handleMonthChange,
     selectedDay,
     handleDayChange,
+    searchQuery,
+    setSearchQuery,
     modalOpen,
     form,
-    monthFilteredExpenses: dayFilteredExpenses,
+    monthFilteredExpenses: searchFilteredExpenses,
     columns,
     categoryOptions,
     spenderOptions,
