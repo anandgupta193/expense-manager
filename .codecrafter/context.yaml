@@ -19,7 +19,7 @@ exposes:
     handler: app/api/health/route.ts
     auth: none
     response: application/json
-    description: Lightweight health check for uptime monitoring; returns {"ok": true, "time": "<ISO timestamp>"}.
+    description: 'Lightweight health check for uptime monitoring; returns {"ok": true, "time": "<ISO timestamp>"}.'
   - method: POST
     path: /api/chat
     handler: app/api/chat/route.ts
