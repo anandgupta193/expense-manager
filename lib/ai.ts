@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { compatProvider } from '@/lib/agent/openaiCompatLlm'
 
 const PROVIDER = process.env.AI_PROVIDER ?? 'gemini'
 
@@ -33,6 +34,20 @@ export async function complete(system: string, user: string): Promise<string> {
       messages: [{ role: 'user', content: user }],
     })
     return res.content[0].type === 'text' ? stripMarkdown(res.content[0].text) : ''
+  }
+
+  const compat = compatProvider(PROVIDER)
+  if (compat && PROVIDER !== 'openai') {
+    const client = new OpenAI({ apiKey: compat.apiKey, baseURL: compat.baseURL })
+    const res = await client.chat.completions.create({
+      model: compat.model,
+      max_tokens: 600,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+    })
+    return stripMarkdown(res.choices[0]?.message?.content ?? '')
   }
 
   // openai

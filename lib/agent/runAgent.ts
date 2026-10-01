@@ -2,6 +2,7 @@ import { LlmAgent } from '@google/adk'
 import agentConfig from '@/config/agent.json'
 import { buildTools, type ToolContext } from './tools'
 import { buildPrompt } from './prompt'
+import { chatModel } from './openaiCompatLlm'
 import type { AgentAction, ChatSnapshot, ChatStreamEvent } from '@/lib/types'
 
 export interface AgentBuildOptions {
@@ -37,7 +38,7 @@ export function buildExpenseAgent({ snapshot, now, emit }: AgentBuildOptions): {
 
   const agent = new LlmAgent({
     name: 'expense_agent',
-    model: agentConfig.model,
+    model: chatModel(agentConfig.model),
     instruction,
     tools,
   })
