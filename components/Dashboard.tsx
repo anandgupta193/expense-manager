@@ -3,8 +3,8 @@
 import { useRef, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dayjs from 'dayjs'
-import { Button, DatePicker, Empty, Progress, Select, Typography, theme, Tag, message } from 'antd'
-import { RiseOutlined, FallOutlined, CalendarOutlined, ExperimentOutlined } from '@ant-design/icons'
+import { DatePicker, Empty, Progress, Select, Typography, theme, Tag } from 'antd'
+import { RiseOutlined, FallOutlined, CalendarOutlined } from '@ant-design/icons'
 import {
   LineChart,
   Line,
@@ -21,9 +21,6 @@ import { useDashboard } from '@/hooks/useDashboard'
 import { formatINR } from '@/utils/formatters'
 import { useBudgetContext, useAppData } from '@/app/providers'
 import AddExpenseFAB, { type AddExpenseFABRef } from '@/components/AddExpenseFAB'
-import { useAuthContext } from '@/app/providers'
-import { UNLIMITED_ANALYSE_EMAILS, DAILY_ANALYSE_LIMIT } from '@/constants/insights'
-import { consumeAnalyse } from '@/lib/analyseQuota'
 
 const { Title, Text } = Typography
 
@@ -164,10 +161,8 @@ function BudgetStatCard({
 
 export default function Dashboard() {
   const { token } = theme.useToken()
-  const { user } = useAuthContext()
   const { budget } = useBudgetContext()
   const { dataLoading } = useAppData()
-  const isUnlimited = UNLIMITED_ANALYSE_EMAILS.includes(user?.email ?? '')
   const router = useRouter()
   const searchParams = useSearchParams()
   const fabRef = useRef<AddExpenseFABRef>(null)
@@ -192,17 +187,6 @@ export default function Dashboard() {
     dailyChartData,
     spenderOptions,
   } = useDashboard()
-
-  function handleAnalyse() {
-    if (!isUnlimited && !consumeAnalyse(DAILY_ANALYSE_LIMIT)) {
-      message.warning(`Daily analysis limit reached (${DAILY_ANALYSE_LIMIT}/day). Try again tomorrow.`)
-      return
-    }
-    const month = selectedMonth ? selectedMonth.format('YYYY-MM') : dayjs().format('YYYY-MM')
-    const params = new URLSearchParams({ month })
-    if (selectedSpenderId) params.set('spender', selectedSpenderId)
-    router.push(`/insights?${params.toString()}`)
-  }
 
   const budgetLimit = budget.monthlyLimit
   const budgetRemaining = budgetLimit ? budgetLimit - monthTotal : null
@@ -259,20 +243,6 @@ export default function Dashboard() {
             format="MMM YYYY"
             inputReadOnly
           />
-          <Button
-            icon={<ExperimentOutlined />}
-            disabled={monthFilteredExpenses.length === 0}
-            onClick={handleAnalyse}
-            style={{
-              background:
-                monthFilteredExpenses.length === 0 ? undefined : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              border: 'none',
-              color: monthFilteredExpenses.length === 0 ? undefined : '#fff',
-              boxShadow: monthFilteredExpenses.length === 0 ? undefined : '0 2px 8px rgba(102,126,234,0.4)',
-            }}
-          >
-            Analyse
-          </Button>
         </div>
       </div>
 
