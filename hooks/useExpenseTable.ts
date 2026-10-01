@@ -89,6 +89,13 @@ export function useExpenseTable() {
     exportExpensesToCSV(dayFilteredExpenses, catMap, spenderMap, `expenses-${label}.csv`)
   }
 
+  function clearFilters() {
+    setSelectedDay(null)
+    setSelectedCategoryId(null)
+    setSelectedSpenderId(undefined)
+    setSearchQuery('')
+  }
+
   function openEdit(expense: Expense) {
     setEditTarget(expense)
     form.setFieldsValue({
@@ -168,5 +175,6 @@ export function useExpenseTable() {
     closeEdit,
     handleEditSave,
     handleExportCSV,
+    clearFilters,
   }
 }
