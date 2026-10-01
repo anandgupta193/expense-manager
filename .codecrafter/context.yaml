@@ -14,6 +14,12 @@ stack: [next.js 16 (app router), react 19, typescript, ant design 6, tailwind 4,
 
 # HTTP endpoints this service serves (Next.js route handlers).
 exposes:
+  - method: GET
+    path: /api/health
+    handler: app/api/health/route.ts
+    auth: none
+    response: application/json
+    description: Lightweight health check for uptime monitoring; returns {"ok": true, "time": "<ISO timestamp>"}.
   - method: POST
     path: /api/chat
     handler: app/api/chat/route.ts
