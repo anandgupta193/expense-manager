@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dayjs from 'dayjs'
-import { Button, DatePicker, Empty, Progress, Select, Typography, theme, Tag } from 'antd'
+import { DatePicker, Empty, Progress, Select, Typography, theme, Tag } from 'antd'
 import { RiseOutlined, FallOutlined, CalendarOutlined } from '@ant-design/icons'
 import {
   LineChart,
@@ -21,7 +21,6 @@ import { useDashboard } from '@/hooks/useDashboard'
 import { formatINR } from '@/utils/formatters'
 import { useBudgetContext, useAppData } from '@/app/providers'
 import AddExpenseFAB, { type AddExpenseFABRef } from '@/components/AddExpenseFAB'
-import { useAuthContext } from '@/app/providers'
 
 const { Title, Text } = Typography
 
@@ -162,7 +161,6 @@ function BudgetStatCard({
 
 export default function Dashboard() {
   const { token } = theme.useToken()
-  const { user } = useAuthContext()
   const { budget } = useBudgetContext()
   const { dataLoading } = useAppData()
   const router = useRouter()
