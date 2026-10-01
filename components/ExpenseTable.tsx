@@ -17,9 +17,10 @@ import {
   theme,
 } from 'antd'
 import { useRef } from 'react'
-import { DownloadOutlined, PlusOutlined } from '@ant-design/icons'
+import { DownloadOutlined, PlusOutlined, ClearOutlined } from '@ant-design/icons'
 import { useExpenseTable } from '@/hooks/useExpenseTable'
 import { requiredRule } from '@/constants/validation'
+import { BUTTON_LABELS } from '@/constants/ui'
 import AddExpenseFAB, { type AddExpenseFABRef } from '@/components/AddExpenseFAB'
 
 const { Text } = Typography
@@ -52,6 +53,7 @@ export default function ExpenseTable() {
     closeEdit,
     handleEditSave,
     handleExportCSV,
+    clearFilters,
   } = useExpenseTable()
 
   return (
@@ -100,6 +102,14 @@ export default function ExpenseTable() {
             format="MMM YYYY"
             inputReadOnly
           />
+          {(selectedDay !== null ||
+            selectedCategoryId !== null ||
+            selectedSpenderId !== undefined ||
+            searchQuery.trim() !== '') && (
+            <Button icon={<ClearOutlined />} onClick={clearFilters} style={{ borderRadius: 8 }}>
+              {BUTTON_LABELS.CLEAR_FILTERS}
+            </Button>
+          )}
           <div className="hidden sm:flex">
             <Button type="primary" icon={<PlusOutlined />} onClick={() => fabRef.current?.open()}>
               Add Expense
