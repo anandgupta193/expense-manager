@@ -1,0 +1,92 @@
+# Architecture manifest for code-crafter's context graph (docs/10-context-graph.md in code-crafter).
+# Keep it in sync: any change to an endpoint, outbound call, database or deployment updates this file
+# in the same PR. A stale manifest is worse than none.
+version: 1
+
+service: expense-manager
+repo: https://github.com/anandgupta193/expense-manager.git
+description: >
+  Personal expense tracker (INR). Users sign in with Google, record expenses by category and
+  spender, set a monthly budget, see dashboards, and manage everything by chatting with an AI agent.
+team: anandgupta193
+domain: personal-finance
+stack: [next.js 16 (app router), react 19, typescript, ant design 6, tailwind 4, recharts, node 24]
+
+# HTTP endpoints this service serves (Next.js route handlers).
+exposes:
+  - method: POST
+    path: /api/chat
+    handler: app/api/chat/route.ts
+    auth: firebase-id-token # Bearer token verified against Google JWKS (lib/auth/verifyIdToken.ts)
+    response: text/event-stream (SSE)
+    description: >
+      Agentic chat. Runs a Google ADK agent (lib/agent/) with tools to add, edit and delete expenses,
+      categories and spenders, set the budget, render a spending card and request older data.
+      Edits and deletes are proposed and need the user's confirmation in the UI.
+    called_by: [hooks/useChat.ts]
+
+# Outbound calls to other services (internal or external).
+calls:
+  # The chat LLM is chosen by AI_PROVIDER (lib/agent/openaiCompatLlm.ts → chatModel).
+  - service: google-gemini
+    external: true
+    purpose: Chat LLM when AI_PROVIDER=gemini (the default); model in config/agent.json
+    via: [lib/agent/runAgent.ts]
+    env: [GEMINI_API_KEY]
+  - service: openrouter
+    external: true
+    purpose: Chat LLM when AI_PROVIDER=openrouter (free models, default openrouter/free)
+    via: [lib/agent/openaiCompatLlm.ts]
+    env: [OPENROUTER_API_KEY, AI_MODEL]
+  - service: groq
+    external: true
+    purpose: Chat LLM when AI_PROVIDER=groq
+    via: [lib/agent/openaiCompatLlm.ts]
+    env: [GROQ_API_KEY, AI_MODEL]
+  - service: openai
+    external: true
+    purpose: Chat LLM when AI_PROVIDER=openai
+    via: [lib/agent/openaiCompatLlm.ts]
+    env: [OPENAI_API_KEY, AI_MODEL]
+  - service: firebase-auth
+    external: true
+    purpose: Google sign-in in the browser; server verifies ID tokens via Google's public JWKS
+    via: [hooks/useAuth.ts, lib/auth/verifyIdToken.ts]
+    env: [NEXT_PUBLIC_FIREBASE_PROJECT_ID]
+
+publishes: []
+subscribes: []
+
+databases:
+  - name: firestore
+    kind: firestore
+    accessed_from: browser (Firebase web SDK), not the server
+    layout: users/{uid}/{collection}/{docId}
+    collections: [expenses, categories, spenders, settings]
+    rules: firestore.rules # each user can read/write only their own subtree
+    code: lib/firestore.ts
+  - name: browser-localstorage
+    kind: localstorage
+    holds: [theme, reminder config, daily chat quota]
+    code: [lib/storage.ts, lib/chatQuota.ts]
+
+# Key libraries an agent should know about before changing code.
+libraries:
+  - { name: '@google/adk', why: chat agent runtime (tools, sessions, streaming) }
+  - { name: openai, why: client for OpenAI-compatible chat providers (OpenRouter, Groq, OpenAI) }
+  - { name: firebase, why: auth + Firestore client }
+  - { name: jose, why: Firebase ID token verification without the Admin SDK }
+  - { name: antd, why: UI components }
+  - { name: recharts, why: dashboard charts }
+  - { name: zod, why: agent tool parameter schemas }
+
+# Docs ingested into the graph as DocChunks.
+docs:
+  - docs/architecture.md
+  - docs/data-model.md
+  - docs/components.md
+  - docs/hooks.md
+  - docs/styling.md
+  - docs/pwa.md
+
+checks: [npm run lint, npm run format, npx tsc --noEmit, npm run build]
