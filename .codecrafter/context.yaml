@@ -72,13 +72,13 @@ databases:
 
 # Key libraries an agent should know about before changing code.
 libraries:
-  - { name: '@google/adk', why: chat agent runtime (tools, sessions, streaming) }
-  - { name: openai, why: client for OpenAI-compatible chat providers (OpenRouter, Groq, OpenAI) }
-  - { name: firebase, why: auth + Firestore client }
-  - { name: jose, why: Firebase ID token verification without the Admin SDK }
-  - { name: antd, why: UI components }
-  - { name: recharts, why: dashboard charts }
-  - { name: zod, why: agent tool parameter schemas }
+  - { name: '@google/adk', why: 'chat agent runtime (tools, sessions, streaming)' }
+  - { name: openai, why: 'client for OpenAI-compatible chat providers (OpenRouter, Groq, OpenAI)' }
+  - { name: firebase, why: 'auth + Firestore client' }
+  - { name: jose, why: 'Firebase ID token verification without the Admin SDK' }
+  - { name: antd, why: 'UI components' }
+  - { name: recharts, why: 'dashboard charts' }
+  - { name: zod, why: 'agent tool parameter schemas' }
 
 # Docs ingested into the graph as DocChunks.
 docs:
