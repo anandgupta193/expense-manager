@@ -48,10 +48,10 @@ export default function ChatWindow() {
           <div className="flex flex-1 flex-col items-center justify-center text-center gap-3">
             <RobotOutlined style={{ fontSize: 40, color: token.colorPrimary }} />
             <Typography.Title level={4} style={{ margin: 0 }}>
-              Your expense assistant
+              Your spending companion
             </Typography.Title>
             <Typography.Text type="secondary">
-              Add expenses, ask about your spending, or manage categories — just type.
+              Chat to add expenses, check your budget, or explore your spending
             </Typography.Text>
           </div>
         ) : (
